@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="canonical" href="https://hugosushi.online/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUGO SUSHI — Japanese food en Ushuaia · Delivery & Take Away</title>
+<meta name="description" content="Sushi en Ushuaia. Rolls, nigiris, combinados y frituras. Armá tu pedido y te llega por WhatsApp. Pedidos hasta las 23 h. Delivery & take away.">
+<!-- Sitio de HUGO SUSHI, hecho por Human Glitche · Visual Lab (2026-08-24; dominio propio hugosushi.online desde 2026-09-01)
+  Sitio propuesto para HUGO SUSHI (@hugo_sushi, Ushuaia, Tierra del Fuego).
+  Antes se llamaba OISHI (@oishi.ush).
+
+  QUÉ RESUELVE: hoy su carta completa vive SOLO en historias destacadas de
+  Instagram. El cliente tiene que screenshotear, acordarse de los precios y
+  después tipear el pedido a mano por WhatsApp. Acá la carta es navegable y
+  tiene un ARMADOR DE PEDIDO: se elige, se suma, y el botón abre WhatsApp con
+  el pedido y el total ya escritos. Ese es el corazón de la propuesta.
+
+  Carta y precios: relevados de sus historias destacadas (las 6 placas de menú
+  que pasó el humano el 2026-08-24). Fotos de platos y del local: capturadas de
+  su propio Instagram con ZETA LENS.
+  PIEZAS GENERADAS: las 24 imágenes de piezas sueltas sobre negro (una por
+  plato de la carta) se generaron con Higgsfield a partir de la descripción de
+  cada uno en SU carta — son ilustrativas del plato, no fotos del producto
+  real. Si compra el sitio se reemplazan por fotos propias. Está aclarado a la
+  vista en la propia página.
+  Para que queden "sin fondo" hacen falta tres cosas juntas: mix-blend-mode
+  screen, aplastar los negros del JPEG con una curva (el negro comprimido queda
+  en ~#0b0b0b y screen lo levantaría como un rectángulo) y una máscara radial
+  que come el degradé gris del render. El fondo de cada pieza se verifica por
+  código: si una vuelve con fondo claro, hay que regenerarla (le pasó a
+  Mexicano, que salió sobre blanco).
+
+  OJO — INCONSISTENCIA EN SU CARTA (confirmar con el cliente): en NIGIRIS, la
+  descripción de "Nigiri de langostino" dice "nigiri de salmón…" y la de
+  "Nigiri ahumado" dice "nigiri de langostino…". Parecen cruzadas. Acá se
+  quitó el sustantivo contradictorio y se dejó el resto de SU texto, sin
+  inventar. Hay que preguntarle cuál va con cuál.
+
+  Datos que faltan y NO se inventaron: dirección exacta, horario de apertura
+  (sólo consta "pedidos hasta 23 h"), días que abre, redes además de IG.
+  NO publicado: vive en web/ (staging del cerebro) hasta que el humano decida.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800;900&family=Russo+One&display=swap" rel="stylesheet">
+<link rel="icon" href="img/logo.jpg">
+<style>
+  :root{
+    --bg:#0a0908; --bg2:#121110; --card:#171513; --ink:#f6f1ea;
+    --dim:rgba(246,241,234,.62); --mute:rgba(246,241,234,.36);
+    --line:rgba(246,241,234,.11); --rojo:#e44027; --rojo-2:#ff7a5c;
+    --oro:#f0c36a; --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  /* El [hidden] del navegador vale menos que CUALQUIER clase que fije display,
+     así que un elemento oculto con el atributo se veía igual apenas tenía una.
+     Pasó dos veces —el selector de horario y el paso de datos— antes de subirlo
+     acá arriba, que es donde tendría que haber estado. */
+  [hidden]{display:none!important;}
+  html{scroll-behavior:smooth;}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--oro);outline-offset:3px;border-radius:4px;}
+  body{background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif;
+       font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  img{max-width:100%;display:block;}
+  a{color:inherit;}
+  .num{font-variant-numeric:tabular-nums;}
+  .disp{font-family:'Russo One',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 22px;}
+
+  /* ── NAV ── */
+  nav{position:sticky;top:0;z-index:60;background:rgba(10,9,8,.92);backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px;gap:18px;}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .brand img{height:34px;width:auto;border-radius:6px;}
+  .nav-links{display:flex;gap:22px;align-items:center;font-size:14px;font-weight:400;}
+  .nav-links a{text-decoration:none;color:var(--dim);transition:color .2s;}
+  .nav-links a:hover{color:var(--ink);}
+  .btn{display:inline-block;background:var(--rojo);color:#fff;font-weight:600;font-size:14px;
+       padding:11px 22px;border-radius:999px;text-decoration:none;border:0;font-family:inherit;
+       cursor:pointer;transition:transform .15s,filter .2s;white-space:nowrap;}
+  .btn:hover{filter:brightness(1.1);} .btn:active{transform:scale(.98);}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+  .btn.ghost:hover{border-color:var(--dim);filter:none;}
+  @media(max-width:980px){ .nav-links a{display:none;} .nav-links .btn{display:inline-block;} }
+
+  /* ── HERO ── */
+  .hero{position:relative;overflow:hidden;padding:66px 0 74px;}
+  .hero::before{content:'';position:absolute;left:50%;top:-10%;width:min(1100px,120vw);height:620px;
+    transform:translateX(-50%);background:radial-gradient(closest-side,rgba(228,64,39,.24),transparent 72%);
+    pointer-events:none;}
+  .hero-in{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;}
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:11.5px;font-weight:500;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--rojo-2);margin-bottom:16px;}
+  .kicker::before{content:'';width:24px;height:2px;background:var(--rojo);}
+  .hero h1{font-size:clamp(2.5rem,5.6vw,4.4rem);font-weight:900;line-height:.97;letter-spacing:-.035em;}
+  .hero h1 em{font-style:normal;color:var(--rojo);}
+  .hero p{margin:18px 0 26px;color:var(--dim);font-size:17px;max-width:44ch;}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+  /* Las piezas vienen sobre negro puro. Con blend screen ese negro se funde con
+     el fondo y la pieza queda de verdad sin fondo — sin recortes ni halos. */
+  .hero-art{position:relative;min-height:400px;}
+  /* la máscara radial come el degradé gris que el render deja alrededor: sin
+     ella, screen lo levanta y se ve el rectángulo de la imagen */
+  .hero-art img{position:absolute;mix-blend-mode:screen;
+    -webkit-mask-image:radial-gradient(circle at 50% 48%,#000 52%,transparent 76%);
+            mask-image:radial-gradient(circle at 50% 48%,#000 52%,transparent 76%);}
+  .hero-art img:nth-child(1){width:56%;left:16%;top:2%;z-index:3;animation:flota 7s ease-in-out infinite;}
+  .hero-art img:nth-child(2){width:40%;left:0;top:46%;z-index:2;animation:flota 8.5s ease-in-out infinite .6s;}
+  .hero-art img:nth-child(3){width:44%;right:0;top:52%;z-index:1;animation:flota 9.5s ease-in-out infinite 1.2s;}
+  @keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  @media(max-width:980px){ .hero-in{grid-template-columns:1fr;} .hero-art{min-height:300px;order:-1;} }
+  @media(prefers-reduced-motion:reduce){ .hero-art img{animation:none;} }
+
+  /* ── TIRA ── */
+  .tira{background:var(--rojo);color:#fff;overflow:hidden;padding:11px 0;}
+  .tira-in{display:flex;gap:40px;white-space:nowrap;animation:corre 30s linear infinite;width:max-content;}
+  .tira span{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+  @keyframes corre{to{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){ .tira-in{animation:none;} }
+
+  /* ── SECCIONES ── */
+  section{padding:74px 0;}
+  .sec-head{margin-bottom:34px;}
+  .sec-head h2{font-size:clamp(1.9rem,4.2vw,3rem);}
+  .sec-head h2 em{font-style:normal;color:var(--rojo);}
+  .sec-head p{color:var(--dim);margin-top:11px;max-width:56ch;}
+  .precio-tira{display:inline-flex;gap:8px;align-items:center;margin-top:14px;font-size:13px;
+    color:var(--oro);border:1px solid rgba(240,195,106,.32);padding:6px 14px;border-radius:999px;}
+
+  /* ── GRILLA DE PLATOS ── */
+  .platos{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media(max-width:1060px){ .platos{grid-template-columns:repeat(3,1fr);} }
+  @media(max-width:820px){ .platos{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .platos{grid-template-columns:1fr;} }
+  .plato{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;display:flex;flex-direction:column;transition:border-color .25s,transform .25s;}
+  .plato:hover{border-color:rgba(228,64,39,.5);transform:translateY(-3px);}
+  /* mismo truco que en el hero: todas las fotos de esta grilla son piezas
+     generadas sobre negro, así que se funden con la tarjeta */
+  .plato-img{aspect-ratio:1;overflow:hidden;position:relative;}
+  .plato-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease;mix-blend-mode:screen;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 56%,transparent 80%);
+            mask-image:radial-gradient(circle at 50% 50%,#000 56%,transparent 80%);}
+  .plato:hover .plato-img img{transform:scale(1.05);}
+  /* Hugo Bests: si WebGL2 anda, un canvas por tarjeta reemplaza visualmente
+     al <img> con el mismo domo/paralaje de la inmersiva — el <img> sigue en
+     el DOM (alt, SEO, y lo que se ve si WebGL falla) y recién se oculta
+     cuando su canvas ya tiene el primer cuadro listo, para no parpadear. */
+  .plato-img canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #gBests .plato-img.domo-listo img{opacity:0;}
+  .plato-img.sinfoto{display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 45%,rgba(228,64,39,.10),transparent 68%);}
+  .plato-img.sinfoto span{font-size:74px;color:rgba(246,241,234,.07);line-height:1;}
+  .plato-body{padding:15px 16px 16px;display:flex;flex-direction:column;gap:7px;flex:1;}
+  .plato h3{font-size:16px;font-weight:600;line-height:1.2;}
+  .plato p{font-size:12.5px;color:var(--dim);line-height:1.5;}
+  .add:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(1)}
+  /* El apagado no se lee como "roto": se lee como "hoy no". */
+  .add:disabled span{font-size:11px;letter-spacing:.04em;color:var(--mute);text-transform:lowercase}
+  .add:disabled:hover{border-color:var(--line);background:transparent}
+  .add-row{display:flex;gap:8px;margin-top:auto;padding-top:12px;}
+  .add{flex:1;background:transparent;border:1px solid var(--line);color:var(--ink);font-family:inherit;
+    font-size:12.5px;font-weight:500;padding:9px 6px;border-radius:9px;cursor:pointer;
+    transition:all .18s;display:flex;flex-direction:column;gap:1px;align-items:center;}
+  .add:hover{border-color:var(--rojo);background:rgba(228,64,39,.12);}
+  .add b{font-weight:600;font-size:11px;letter-spacing:.06em;color:var(--mute);}
+  .add span{font-weight:600;font-size:13.5px;}
+  .add.tiene{border-color:var(--rojo);background:rgba(228,64,39,.18);}
+
+  /* ── COMBINADOS ── */
+  .combis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:980px){ .combis{grid-template-columns:1fr 1fr;} }
+  @media(max-width:620px){ .combis{grid-template-columns:1fr;} }
+  .combi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px;
+    display:flex;flex-direction:column;}
+  .combi.dest{border-color:rgba(240,195,106,.4);background:linear-gradient(180deg,rgba(240,195,106,.07),var(--card));}
+  .combi h3{font-size:19px;margin-bottom:8px;}
+  .combi.dest h3{color:var(--oro);}
+  .combi>p{font-size:12.5px;color:var(--dim);line-height:1.5;margin-bottom:16px;}
+  .combi-row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:9px 0;border-top:1px solid var(--line);font-size:14px;}
+  .combi-row b{font-weight:500;color:var(--dim);font-size:13px;}
+  .combi-row .p{font-weight:600;color:var(--ink);}
+  .mini{background:transparent;border:1px solid var(--line);color:var(--ink);font-family:inherit;
+    font-size:11.5px;font-weight:500;padding:5px 12px;border-radius:999px;cursor:pointer;transition:all .18s;}
+  .mini:hover{border-color:var(--rojo);background:rgba(228,64,39,.14);}
+  .nota{font-size:11.5px;color:var(--mute);margin-top:12px;font-style:italic;}
+
+  /* ── CARRITO ── */
+  #barra{position:fixed;left:0;right:0;bottom:0;z-index:80;background:rgba(14,12,11,.97);
+    backdrop-filter:blur(16px);border-top:1px solid var(--line);transform:translateY(105%);
+    transition:transform .3s cubic-bezier(.16,1,.3,1);}
+  #barra.on{transform:none;}
+  .barra-in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;}
+  .barra-info{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .barra-info b{font-size:19px;font-weight:700;}
+  .barra-info span{font-size:13px;color:var(--dim);}
+  .barra-btns{display:flex;gap:10px;align-items:center;}
+  .link-min{background:none;border:0;color:var(--mute);font-family:inherit;font-size:12.5px;
+    cursor:pointer;text-decoration:underline;}
+  .link-min:hover{color:var(--dim);}
+
+  #panel{position:fixed;inset:0;z-index:90;background:rgba(4,3,3,.72);backdrop-filter:blur(5px);
+    display:none;align-items:flex-end;justify-content:center;}
+  #panel.on{display:flex;}
+  .panel-box{background:var(--bg2);border:1px solid var(--line);border-radius:18px 18px 0 0;
+    width:100%;max-width:620px;max-height:86dvh;display:flex;flex-direction:column;}
+  .panel-top{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;
+    border-bottom:1px solid var(--line);}
+  .panel-top h3{font-size:17px;font-weight:600;}
+  .cerrar{background:none;border:1px solid var(--line);color:var(--ink);width:32px;height:32px;
+    border-radius:50%;cursor:pointer;font-size:15px;font-family:inherit;line-height:1;}
+  .panel-lista{overflow:auto;padding:8px 22px;flex:1;}
+  .li{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .li-txt{flex:1;min-width:0;}
+  .li-txt b{display:block;font-size:14px;font-weight:500;}
+  .li-txt span{font-size:12px;color:var(--mute);}
+  .qty{display:flex;align-items:center;gap:9px;}
+  .qty button{background:transparent;border:1px solid var(--line);color:var(--ink);width:26px;height:26px;
+    border-radius:50%;cursor:pointer;font-family:inherit;font-size:14px;line-height:1;}
+  .qty button:hover{border-color:var(--rojo);}
+  .qty span{min-width:18px;text-align:center;font-size:14px;font-weight:600;}
+  .li-p{font-weight:600;font-size:14px;min-width:82px;text-align:right;}
+  .panel-pie{padding:18px 22px 22px;border-top:1px solid var(--line);}
+  /* ── PARA CUÁNDO (037) ──────────────────────────────────────────────────
+     Dos pestañas y no un checkbox: «lo antes posible» tiene que estar elegido
+     de entrada y verse elegido. Un campo de fecha vacío al lado del botón hace
+     dudar de si hay que completarlo, y el que duda no termina de pedir. */
+  #cuando{margin:12px 0 4px;}
+  .cuando-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;
+    background:rgba(255,255,255,.05);padding:4px;border-radius:10px;}
+  .cuando-tab{border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;
+    padding:8px 6px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s;}
+  .cuando-tab.on{background:var(--acento,#e44027);color:#fff;}
+  .cuando-sel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .cuando-sel select{width:100%;padding:9px 10px;border-radius:8px;font:inherit;font-size:14px;
+    background:rgba(255,255,255,.06);color:var(--txt,#fff);border:1px solid var(--line);}
+  .cuando-nota{margin:8px 0 0;font-size:12.5px;color:var(--dim);line-height:1.4;}
+  /* ── EL PEDIDO SE GESTIONA ACÁ (038) ────────────────────────────────────
+     Tres pasos en el mismo panel: el carrito, quién sos y cómo pagás, y lo que
+     pasa después. WhatsApp deja de ser el único camino y pasa a ser uno: sigue
+     a un toque de distancia en los dos primeros pasos, para el que prefiere
+     escribir antes que llenar campos. */
+  .volver{margin-right:auto;order:-1;}
+  .panel-top h3{flex:1;text-align:center;}
+  .panel-form{overflow:auto;padding:16px 22px 4px;flex:1;display:grid;gap:14px;align-content:start;}
+  .campo{display:grid;gap:6px;}
+  .campo-t{font-size:12.5px;color:var(--dim);letter-spacing:.02em;}
+  .campo-t i{font-style:normal;opacity:.7;}
+  .campo input{width:100%;padding:11px 12px;border-radius:9px;font:inherit;font-size:15px;
+    background:rgba(255,255,255,.06);color:var(--txt,#fff);border:1px solid var(--line);}
+  .campo input:focus{outline:none;border-color:var(--acento,#e44027);}
+  .campo input.mal{border-color:#e05555;}
+  .campo small{font-size:12px;color:var(--dim);line-height:1.35;}
+  .pagos{display:grid;gap:8px;}
+  .pago{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px 13px;
+    border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);
+    color:inherit;font:inherit;cursor:pointer;}
+  .pago.on{border-color:var(--acento,#e44027);background:rgba(228,64,39,.1);}
+  .pago b{display:block;font-size:14.5px;font-weight:600;}
+  .pago span{display:block;font-size:12px;color:var(--dim);margin-top:1px;}
+  .pago em{font-style:normal;font-size:19px;width:24px;text-align:center;flex:none;}
+  .err:not(:empty){color:#ff9c9c;}
+  /* El globo del chat flota sobre todo, y con el panel abierto se le sienta
+     encima del total. Un chat flotando sobre un diálogo modal es ruido igual:
+     mientras el panel está abierto, se va. */
+  body.pidiendo #hgia-bubble,
+  body.pidiendo #hgia-hint,
+  body.pidiendo #hgia-panel{display:none!important;}
+  .total-row s{color:var(--dim);font-size:15px;font-weight:500;margin-right:7px;}
+  .dto-ok{font-size:12.5px;color:#7fd39b;margin-bottom:12px;}
+  .link-wa{display:block;width:100%;margin-top:10px;background:none;border:0;color:var(--dim);
+    font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .link-wa:hover{color:var(--txt,#fff);}
+  /* La confirmación: el código es lo más grande de la pantalla porque es lo
+     único que el cliente va a tener que decir si algo sale mal. */
+  .cod{font-size:13px;color:var(--dim);text-align:center;}
+  .cod b{display:block;font-size:26px;font-weight:700;letter-spacing:.06em;color:var(--txt,#fff);margin-top:3px;}
+  /* `dato`/`datos` ya estaban tomados por el pie de la página. Un nombre que
+     choca no se ve hasta que una regla de más abajo te pone el alias en
+     mayúsculas y el cliente copia una cosa distinta de la que lee. */
+  .cbdatos{display:grid;gap:9px;padding:14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);}
+  .cbrow{display:flex;align-items:center;gap:10px;justify-content:space-between;}
+  .cbrow span{font-size:12px;color:var(--dim);flex:none;}
+  .cbrow b{font-size:14.5px;font-weight:600;word-break:break-all;text-align:right;
+    text-transform:none;letter-spacing:normal;}
+  .copiar{background:none;border:1px solid var(--line);color:var(--dim);border-radius:7px;
+    padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;flex:none;}
+  .copiar:hover{border-color:var(--acento,#e44027);color:var(--txt,#fff);}
+  .total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .total-row b{font-size:22px;font-weight:700;}
+  .desc-nota{font-size:12px;color:var(--oro);margin-bottom:14px;}
+  .panel-pie .btn{width:100%;text-align:center;padding:14px;font-size:15px;}
+  .vacio-c{text-align:center;padding:40px 20px;color:var(--mute);font-size:14px;}
+
+  /* ── LOCAL ── */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;}
+  .split img{border-radius:var(--radius);aspect-ratio:4/3;object-fit:cover;width:100%;}
+  .split h2{font-size:clamp(1.8rem,3.4vw,2.6rem);margin-bottom:14px;}
+  .split h2 em{font-style:normal;color:var(--rojo);}
+  .split p{color:var(--dim);margin-bottom:12px;}
+  .datos{margin-top:20px;display:grid;gap:12px;}
+  .dato{border-top:1px solid var(--line);padding-top:12px;}
+  .dato b{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--mute);font-weight:500;margin-bottom:3px;}
+  .dato a{color:var(--rojo-2);text-decoration:none;font-weight:500;}
+  .dato a:hover{text-decoration:underline;}
+  @media(max-width:860px){ .split{grid-template-columns:1fr;gap:28px;} }
+
+  /* ── GALERÍA ── */
+  .tira-fotos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .tira-fotos img{border-radius:10px;aspect-ratio:1;object-fit:cover;width:100%;}
+  @media(max-width:820px){ .tira-fotos{grid-template-columns:1fr 1fr;} }
+
+  footer{border-top:1px solid var(--line);padding:36px 0 120px;}
+  .foot-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;
+    color:var(--mute);font-size:13px;}
+  .aclara{font-size:11.5px;color:var(--mute);margin-top:18px;line-height:1.55;
+    border-top:1px solid var(--line);padding-top:16px;}
+  .demo-tag{position:fixed;left:14px;bottom:80px;z-index:70;font-size:10.5px;color:var(--mute);
+    background:rgba(10,9,8,.86);border:1px solid var(--line);padding:5px 11px;border-radius:999px;
+    backdrop-filter:blur(8px);pointer-events:none;}
+
+  .rv{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s cubic-bezier(.16,1,.3,1);}
+  .rv.in{opacity:1;transform:none;}
+  @media(prefers-reduced-motion:reduce){ .rv{opacity:1;transform:none;transition:none;} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><img src="img/logo.jpg" alt="Hugo Sushi"></a>
+    <div class="nav-links">
+      <a href="#bests">Hugo Bests</a>
+      <a href="#rolls">Rolls</a>
+      <a href="#nigiris">Nigiris</a>
+      <a href="#combinados">Combinados</a>
+      <a href="#frituras">Frituras</a>
+      <a href="inmersivo.html" style="color:var(--rojo-2)">✦ Inmersiva</a>
+      <a class="btn" href="#bests">Armar pedido</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-in">
+    <div>
+      <span class="kicker">Ushuaia · Delivery &amp; take away</span>
+      <h1>El sushi del <em>fin del mundo</em>.</h1>
+      <p>Rolls, nigiris y combinados hechos el día. Elegí lo que querés, armá tu pedido y te lo mandamos ya escrito por WhatsApp — sin capturas ni idas y vueltas.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="#bests">Armar mi pedido</a>
+        <a class="btn ghost" href="inmersivo.html">Experiencia inmersiva ✦</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <img src="img/hawai-smoke.jpg" alt="Roll Hawai Smoke con salmón flambeado" fetchpriority="high">
+      <img src="img/beetroot.jpg" alt="Roll Beetroot con cubierta de remolacha" loading="lazy">
+      <img src="img/sweet-mango.jpg" alt="Roll Sweet Mango" loading="lazy">
+    </div>
+  </div>
+</header>
+
+<div class="tira">
+  <div class="tira-in" id="tiraIn" aria-hidden="true"></div>
+</div>
+
+<section id="bests">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Hugo <em>Bests</em></h2>
+      <p>Los que nos hicieron famosos. Cada uno con su cubierta y su salsa — los que más se piden y los que más se sacan fotos.</p>
+      <span class="precio-tira">x4 · $12.500 &nbsp;·&nbsp; x8 · $22.000</span>
+    </div>
+    <div class="platos" id="gBests"></div>
+    <p class="aclara">Las imágenes de esta sección son ilustrativas del plato, generadas a partir de la descripción de la carta. Al contratar el sitio se reemplazan por fotos propias de cada roll.</p>
+  </div>
+</section>
+
+<section id="rolls" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Hugo <em>Rolls</em></h2>
+      <p>Los clásicos de siempre, con salmón fresco y palta. Rolls sin corte si los preferís así.</p>
+      <span class="precio-tira">x4 · $10.000 &nbsp;·&nbsp; x8 · $19.000</span>
+    </div>
+    <div class="platos" id="gRolls"></div>
+  </div>
+</section>
+
+<section id="nigiris">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Nigiris &amp; <em>sashimi</em></h2>
+      <p>La pieza sola, sin nada que la tape. Salmón rosado y langostino.</p>
+    </div>
+    <div class="platos" id="gNigiris"></div>
+  </div>
+</section>
+
+<section id="combinados" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Com<em>binados</em></h2>
+      <p>Para compartir. Elegí el tamaño según cuántos sean — y si querés que elijamos nosotros, pedí el Omakase.</p>
+    </div>
+    <div class="combis" id="gCombis"></div>
+  </div>
+</section>
+
+<section id="frituras">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Fri<em>turas</em></h2>
+      <p>Lo que sale caliente de la cocina: harumakis, langostinos apanados y los hot-rolls.</p>
+    </div>
+    <div class="platos" id="gFrituras"></div>
+  </div>
+</section>
+
+<section style="background:var(--bg2);border-top:1px solid var(--line);">
+  <div class="wrap rv">
+    <div class="split">
+      <img src="img/chef.jpg" alt="La barra de Hugo Sushi trabajando" loading="lazy">
+      <div>
+        <h2 class="disp">Hecho acá, <em>en Ushuaia</em></h2>
+        <p>Somos los mismos de siempre: antes Oishi, ahora Hugo. La misma barra, la misma gente y el mismo pescado.</p>
+        <p>Trabajamos con delivery y take away todos los días, con promos diarias y descuentos que van cambiando.</p>
+        <div class="datos">
+          <div class="dato"><b>Pedidos por WhatsApp</b><a href="https://wa.me/5492901300080" target="_blank" rel="noopener">2901 30 00 80</a></div>
+          <div class="dato"><b>Horario de pedidos</b><span style="color:var(--dim)">Todos los días hasta las 23:00</span></div>
+          <div class="dato"><b>Retirando y en efectivo</b><span style="color:var(--dim)">10% de descuento, siempre</span></div>
+          <div class="dato"><b>Instagram</b><a href="https://www.instagram.com/hugo_sushi/" target="_blank" rel="noopener">@hugo_sushi</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap rv">
+    <div class="sec-head"><h2 class="disp">De la <em>barra</em></h2></div>
+    <div class="tira-fotos">
+      <img src="img/tabla-mixta.jpg" alt="Tabla mixta de rolls" loading="lazy">
+      <img src="img/nigiri-salmon.jpg" alt="Nigiris de salmón" loading="lazy">
+      <img src="img/mango-tabla.jpg" alt="Rolls con cubierta de mango" loading="lazy">
+      <img src="img/combinado-grande.jpg" alt="Combinado grande para compartir" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <a class="brand" href="#top"><img src="img/logo.jpg" alt="Hugo Sushi" style="height:30px"></a>
+      <a href="https://wa.me/5492901300080" target="_blank" rel="noopener" style="text-decoration:none;color:var(--dim);">WhatsApp 2901 30 00 80</a>
+      <span>© 2026 Hugo Sushi · Ushuaia, Tierra del Fuego</span>
+    </div>
+  </div>
+</footer>
+
+<div id="barra">
+  <div class="wrap barra-in">
+    <div class="barra-info">
+      <b class="num" id="bTotal">$ 0</b>
+      <span id="bCant">0 productos</span>
+      <button class="link-min" id="bVaciar">vaciar</button>
+    </div>
+    <div class="barra-btns">
+      <button class="btn ghost" id="bVer">Ver pedido</button>
+      <button class="btn" id="bWa">Pedir por WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<div id="panel" role="dialog" aria-modal="true" aria-label="Tu pedido">
+  <div class="panel-box">
+    <div class="panel-top">
+      <button class="cerrar volver" id="pVolver" aria-label="Volver" hidden>←</button>
+      <h3 id="pTitulo">Tu pedido</h3>
+      <button class="cerrar" id="pCerrar" aria-label="Cerrar">✕</button>
+    </div>
+
+    <!-- PASO 1 · el carrito -->
+    <div class="panel-lista" id="pLista"></div>
+
+    <!-- PASO 2 · quién sos y cómo pagás -->
+    <div class="panel-form" id="pDatos" hidden>
+      <div class="campo">
+        <span class="campo-t">¿Cómo lo querés?</span>
+        <div class="cuando-tabs">
+          <button type="button" class="cuando-tab on" data-entrega="retiro">Lo retiro</button>
+          <button type="button" class="cuando-tab" data-entrega="envio">Delivery</button>
+        </div>
+      </div>
+      <label class="campo"><span class="campo-t">Tu nombre</span>
+        <input id="fNombre" maxlength="60" autocomplete="name" placeholder="Cómo te llamamos"></label>
+      <label class="campo"><span class="campo-t">Teléfono</span>
+        <input id="fTel" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="2901 …">
+        <small>Para avisarte cuando esté listo.</small></label>
+      <label class="campo" id="fDirBox" hidden><span class="campo-t">Dirección</span>
+        <input id="fDir" maxlength="120" autocomplete="street-address" placeholder="Calle y número">
+        <small>Sumá lo que ayude a encontrarte: piso, timbre, entre qué calles.</small></label>
+      <label class="campo"><span class="campo-t">Aclaraciones <i>(opcional)</i></span>
+        <input id="fNota" maxlength="200" placeholder="Sin cebolla, tocar timbre…"></label>
+      <div class="campo" id="fPagoBox" hidden>
+        <span class="campo-t">¿Cómo pagás?</span>
+        <div class="pagos" id="fPagos"></div>
+      </div>
+      <p class="cuando-nota err" id="fErr"></p>
+    </div>
+
+    <!-- PASO 3 · quedó tomado -->
+    <div class="panel-form" id="pListo" hidden></div>
+
+    <div class="panel-pie">
+      <div id="pieCarrito">
+        <div class="total-row"><span>Total</span><b class="num" id="pTotal">$ 0</b></div>
+        <div id="cuando" hidden>
+          <div class="cuando-tabs">
+            <button type="button" class="cuando-tab on" data-cuando="ya">Lo antes posible</button>
+            <button type="button" class="cuando-tab" data-cuando="luego">Para más adelante</button>
+          </div>
+          <div class="cuando-sel" id="cuandoSel" hidden>
+            <select id="cDia" aria-label="Para qué día"></select>
+            <select id="cHora" aria-label="A qué hora"></select>
+          </div>
+          <p class="cuando-nota" id="cuandoNota"></p>
+        </div>
+        <p class="desc-nota" id="dtoCarrito" hidden></p>
+        <button class="btn" id="pSeguir">Continuar</button>
+        <button class="link-wa" id="pWa">o pedilo por WhatsApp</button>
+      </div>
+      <div id="pieDatos" hidden>
+        <div class="total-row"><span>Total</span><b class="num" id="pTotal2">$ 0</b></div>
+        <p class="desc-nota" id="dtoNota" hidden></p>
+        <p class="dto-ok" id="dtoOk" hidden></p>
+        <button class="btn" id="pConfirmar">Confirmar el pedido</button>
+        <button class="link-wa" id="pWa2">o pedilo por WhatsApp</button>
+      </div>
+      <div id="pieListo" hidden></div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+'use strict';
+const WA='5492901300080';
+
+/* ── MUESTRA: en la vitrina el pedido no se manda ────────────────────────────
+   Este archivo se sirve en DOS dominios: `hugosushi.online`, que es el sitio de
+   Hugo y toma pedidos de verdad, y `demos.hg-vl.com`, que es la vitrina — se
+   entra con el link, sin credencial, porque es para mostrar lo que hacemos.
+
+   Desde el 2026-09-17 la API no le acepta escrituras a la vitrina, así que el
+   pedido ya no le entra al panel del mostrador. Faltaba esto: el botón de
+   WhatsApp es un `wa.me`, no pasa por la API, y desde la vitrina le abría un
+   pedido REAL al teléfono real de Hugo — uno que él no iba a encontrar en
+   ningún lado, que es peor que no recibirlo.
+
+   El armador se usa entero: elegir, sumar, ver el total, pasar a los datos. Eso
+   es justamente lo que hay que mostrarle a un prospecto. Lo único que no se
+   ofrece es mandarlo.
+
+   La lista es la misma que la del server (`PORTALES_HUELLA`). `hugosushi.online`
+   NO está en ella, y por eso ahí no cambia absolutamente nada — es una lista de
+   vitrinas y no una de sitios propios: si mañana Hugo suma un dominio, sigue
+   vendiendo igual, y lo peor que puede pasar es que una vitrina nueva quede
+   afuera de la lista (la API igual le corta la escritura). Al revés —una lista
+   de sitios propios— un dominio nuevo de Hugo dejaría de vender en silencio. */
+const VITRINAS=['demos.hg-vl.com','0800webs.com'];
+const MUESTRA=VITRINAS.includes(location.hostname);
+
+/* ═══ La carta, relevada de sus historias destacadas (2026-08-24) ═══
+   p4/p8 = precio por 4 y por 8 piezas; p3/p6 para nigiris; p = precio único.
+
+   Descripciones corregidas el 2026-09-16 con el relevo del dueño: la foto y el
+   texto de un roll son una promesa operativa, y había cinco que prometían algo
+   distinto de lo que sale de la cocina. El detalle de cada una va en su línea.
+   Las mismas correcciones están cargadas en la API, que es de donde las toma el
+   bot de WhatsApp. */
+const BESTS=[
+ {id:'beetroot',n:'Beetroot',img:'beetroot',d:'Relleno de langostinos apanados y palta. Cubierta de remolacha, mayo acevichada, verdeo y togarashi.'},
+ // Faltaba el relleno entero: la cubierta estaba bien descripta, el interior no se nombraba.
+ {id:'sweetmango',n:'Sweet Mango',img:'sweet-mango',d:'Relleno de langostino hervido y palta. Cubierta de mango, azúcar mascabo y mix de semillas.'},
+ {id:'redpassion',n:'Red Passion',img:'red-passion',d:'Salmón rosado y queso, cubierto de frutillas azucaradas y mix de semillas.'},
+ // "Rebozado" sin decir que va frito, y la foto sugería una salsa que no existe.
+ {id:'blackavocado',n:'Black Avocado',img:'black-avocado',d:'Relleno de salmón apanado y frito. Cubierta de palta sopleteada. No lleva salsa.'},
+ {id:'hawaismoke',n:'Hawai Smoke',img:'hawai-smoke',d:'Avocado, queso y mango. Cubierta de salmón flambeado con manteca ahumada.'},
+ {id:'nikkeiroll',n:'Nikkei Roll',img:'nikkei-roll',d:'Relleno de langostinos y avocado. Cubierta de salmón, avocado y verdeo, con salsa nikkei.'},
+ {id:'ebifurai',n:'Ebi Furai',img:'ebi-furai',d:'Langostinos apanados con salsa de mostaza y miel.'}
+].map(x=>({...x,p4:12500,p8:22000,sec:'Hugo Bests'}));
+
+const ROLLS=[
+ {id:'philadelphia',n:'Philadelphia',d:'Salmón, queso y palta.',img:'philadelphia'},
+ // Va con el arroz por fuera; la foto lo mostraba con alga.
+ {id:'newyork',n:'New York',d:'Arroz por fuera. Salmón y palta.',img:'newyork'},
+ {id:'boston',n:'Boston',d:'Arroz por fuera. Relleno de salmón cocido, mayonesa y verdeo mezclados.',img:'boston'},
+ // La que más lejos estaba: el salmón, el verdeo y el ajito van ARRIBA, no adentro.
+ {id:'tartar',n:'Tartar',d:'Arroz por fuera. Relleno de pepino, palta y queso. Arriba, salmón con verdeo y ajito.',img:'tartar'},
+ {id:'mexicano',n:'Mexicano',d:'Salmón, mango, queso, guacamole y nachos.',img:'mexicano'},
+ {id:'acevichado',n:'Acevichado',d:'Langostinos, palta y nuestra mayonesa acevichada.',img:'acevichado'},
+ {id:'california',n:'California',d:'Kanikama, mango y palta.',img:'california'},
+ {id:'limaroll',n:'Lima Roll',d:'Batata, pepino, queso y ceviche.',img:'limaroll'}
+].map(x=>({...x,p4:10000,p8:19000,sec:'Hugo Rolls'}));
+
+/* Su carta cruza las descripciones de langostino/ahumado (ver comentario del
+   encabezado): se dejó el resto del texto y se quitó el sustantivo que no
+   coincide con el nombre. Confirmar con el cliente. */
+const NIGIRIS=[
+ {id:'nigsalmon',n:'Nigiri de salmón',img:'nigiri-flambeado',d:'Flambeado con manteca ahumada.',p3:10000,p6:19000},
+ {id:'niglango',n:'Nigiri de langostino',img:'nigiri-langostino',d:'Con salsa nikkei, verdeo y mix.',p3:10000,p6:19000},
+ {id:'nigahumado',n:'Nigiri ahumado',img:'nigiri-ahumado',d:'Quemado con manteca ahumada.',p3:10000,p6:19000},
+ {id:'sashimi',n:'Sashimi de salmón',img:'sashimi-salmon',d:'Láminas de salmón rosado.',p3:12000,p6:20000}
+].map(x=>({...x,sec:'Nigiris'}));
+
+const FRITURAS=[
+ {id:'harucarne',n:'Harumakis de carne',img:'harumaki-carne',d:'Arrolladitos de carne, x4 unidades.',p:14500,sec:'Frituras'},
+ {id:'haruveg',n:'Harumakis de vegetales',img:'harumaki-verdura',d:'Arrolladitos de vegetales, x4 unidades.',p:14500,sec:'Frituras'},
+ {id:'ebifuraifrito',n:'Ebi Furai',img:'ebi-furai',d:'Langostinos apanados, x7 unidades.',p:20000,sec:'Frituras'},
+ {id:'hotphila',n:'Hot Phila',img:'hot-phila',d:'Salmón y queso, rebozado y caliente.',p4:12500,p8:22000,sec:'Hot-rolls'},
+ {id:'hotebi',n:'Hot Ebi',img:'hot-ebi',d:'Langostino y queso, rebozado y caliente.',p4:12500,p8:22000,sec:'Hot-rolls'},
+ {id:'hotpassion',n:'Hot Passion',img:'hot-passion',d:'Salmón, queso y salsa de maracuyá.',p4:12500,p8:22000,sec:'Hot-rolls'}
+];
+
+/* All Roll y Mixto salieron de la carta el 2026-09-16: el cliente elige los
+   rolls por separado, que es lo que la nueva lógica de precios busca. Con ellos
+   se va también el kanikama incluido por defecto — el que lo quiere, lo pide
+   aparte. Se borran de acá en vez de dejarlos apagados: un combinado que la
+   cocina ya no arma no es "no hay por hoy", es que no está más. */
+const COMBIS=[
+ {id:'salmon',n:'Salmón',d:'Rolls con salmón rosado, makis y nigiris de salmón.',
+  op:[[18,25000],[34,45000],[40,60000],[50,72000],[60,85000]]},
+ {id:'vegetariano',n:'Vegetariano',d:'4 variedades de rolls con tomate, lechuga, rúcula, palta, zanahoria, batata, mango y remolacha, entre otras.',
+  op:[[16,20000],[32,40000],[40,50000],[50,60000]]},
+ {id:'omakase',n:'Omakase',dest:true,d:'Elegimos nosotros: hot rolls, variedades de Hugo Bests y clásicos. El combinado especial sugerido.',
+  op:[[20,37500],[36,72000],[48,98500]]},
+ {id:'ensalada',n:'Ensalada de sushi',d:'Arroz, palta, queso, sésamo, alga, kanikama y cebolla de verdeo. Podés agregarle salmón o langostinos.',
+  op:[[1,20000]],unidad:'porción'}
+];
+
+const $=id=>document.getElementById(id);
+const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>'$ '+v.toLocaleString('es-AR');
+
+/* ── carrito ── */
+let carro=JSON.parse(localStorage.getItem('hugo_carro')||'{}');
+/* En qué paso del pedido está el panel, qué formas de pago acepta el comercio y
+   el pedido ya tomado. Se declaran ACÁ ARRIBA porque `pintarCarro()` mira
+   `PASO`, y con `let` un uso antes de la declaración no es undefined: es un
+   ReferenceError que se lleva puesto lo que estuviera corriendo. */
+let PASO='carrito', COBRO=null, PEDIDO=null;
+function guardar(){ localStorage.setItem('hugo_carro',JSON.stringify(carro)); pintarCarro(); }
+function sumar(clave,nombre,precio,detalle){
+  if(!carro[clave]) carro[clave]={n:nombre,p:precio,d:detalle||'',q:0};
+  carro[clave].q++; guardar();
+}
+function restar(clave){ if(!carro[clave])return; carro[clave].q--; if(carro[clave].q<=0) delete carro[clave]; guardar(); }
+const totalCarro=()=>Object.values(carro).reduce((s,i)=>s+i.p*i.q,0);
+const piezasCarro=()=>Object.values(carro).reduce((s,i)=>s+i.q,0);
+
+function pintarCarro(){
+  const t=totalCarro(), n=piezasCarro();
+  $('bTotal').textContent=fmt(t);
+  $('bCant').textContent=n===1?'1 producto':n+' productos';
+  $('pTotal').textContent=fmt(t);
+  $('barra').classList.toggle('on',n>0);
+  /* Vaciar el carrito cierra el panel, salvo en la confirmación: ahí el carrito
+     quedó vacío JUSTAMENTE porque el pedido ya está del otro lado, y cerrar la
+     pantalla se lleva el código y el alias antes de que nadie los lea. */
+  if(n===0 && PASO!=='listo'){ $('panel').classList.remove('on'); document.body.classList.remove('pidiendo'); }
+  $('pLista').innerHTML=n===0
+    ? '<p class="vacio-c">Todavía no elegiste nada.</p>'
+    : Object.entries(carro).map(([k,i])=>`
+      <div class="li">
+        <div class="li-txt"><b>${esc(i.n)}</b><span>${esc(i.d)} · ${fmt(i.p)}</span></div>
+        <div class="qty">
+          <button data-menos="${esc(k)}" aria-label="Quitar uno">−</button>
+          <span class="num">${i.q}</span>
+          <button data-mas="${esc(k)}" aria-label="Agregar uno">+</button>
+        </div>
+        <div class="li-p num">${fmt(i.p*i.q)}</div>
+      </div>`).join('');
+  $('pLista').querySelectorAll('[data-menos]').forEach(b=>b.onclick=()=>restar(b.dataset.menos));
+  $('pLista').querySelectorAll('[data-mas]').forEach(b=>{
+    const k=b.dataset.mas; b.onclick=()=>{carro[k].q++;guardar();};
+  });
+  // marcar los botones de los platos que ya están en el pedido
+  document.querySelectorAll('.add').forEach(b=>b.classList.toggle('tiene',!!carro[b.dataset.k]));
+}
+
+/* ── tarjetas ── */
+/* `conFoto` = la sección tiene al menos un plato con imagen. Si lo tiene, los
+   que no la tienen llevan un marcador del mismo alto (si no, la tarjeta se
+   estira para igualar a las vecinas y queda un hueco). Si la sección entera va
+   sin fotos, no se dibuja el área de imagen en ninguna. */
+function tarjeta(x,_i,arr){
+  const conFoto=arr.some(y=>y.img);
+  const foto=x.img
+    ? `<div class="plato-img"><img src="img/${x.img}.jpg" alt="${esc(x.n)}" loading="lazy"></div>`
+    : (conFoto?'<div class="plato-img sinfoto"><span>鮨</span></div>':'');
+  let botones='';
+  if(x.p4) botones=`
+    <button class="add" data-k="${x.id}|4" data-n="${esc(x.n)} (x4)" data-p="${x.p4}" data-d="4 piezas"><b>x4 piezas</b><span class="num">${fmt(x.p4)}</span></button>
+    <button class="add" data-k="${x.id}|8" data-n="${esc(x.n)} (x8)" data-p="${x.p8}" data-d="8 piezas"><b>x8 piezas</b><span class="num">${fmt(x.p8)}</span></button>`;
+  else if(x.p3) botones=`
+    <button class="add" data-k="${x.id}|3" data-n="${esc(x.n)} (x3)" data-p="${x.p3}" data-d="3 piezas"><b>x3 piezas</b><span class="num">${fmt(x.p3)}</span></button>
+    <button class="add" data-k="${x.id}|6" data-n="${esc(x.n)} (x6)" data-p="${x.p6}" data-d="6 piezas"><b>x6 piezas</b><span class="num">${fmt(x.p6)}</span></button>`;
+  else botones=`
+    <button class="add" data-k="${x.id}" data-n="${esc(x.n)}" data-p="${x.p}" data-d="unidad"><b>agregar</b><span class="num">${fmt(x.p)}</span></button>`;
+  return `<article class="plato">${foto}
+    <div class="plato-body"><h3>${esc(x.n)}</h3><p>${esc(x.d)}</p>
+      <div class="add-row">${botones}</div></div></article>`;
+}
+function pintarGrilla(cont,lista){
+  $(cont).innerHTML=lista.map(tarjeta).join('');
+}
+function combi(c){
+  return `<div class="combi${c.dest?' dest':''}">
+    <h3 class="disp">${esc(c.n)}</h3><p>${esc(c.d)}</p>
+    ${c.op.map(([pz,pr])=>`
+      <div class="combi-row">
+        <b>${c.unidad?esc(c.unidad):pz+' piezas'}</b>
+        <span class="p num">${fmt(pr)}</span>
+        <button class="mini add" data-k="${c.id}|${pz}" data-n="${esc(c.n)}${c.unidad?'':' '+pz+' pz'}" data-p="${pr}" data-d="${c.unidad?esc(c.unidad):pz+' piezas'}">Agregar</button>
+      </div>`).join('')}
+    ${c.id==='omakase'?'<p class="nota">Sugerido por la casa.</p>':''}
+  </div>`;
+}
+
+/* ── enlace con el backend propio ─────────────────────────────────────────
+   Los precios y la disponibilidad pueden venir del server, para que Hugo los
+   cambie sin que nadie republique el sitio.
+
+   Regla que manda acá: SI EL SERVER NO CONTESTA, LA CARTA FUNCIONA IGUAL con
+   los precios que ya tiene adentro. Una demo que muestra un error es peor que
+   una que anda sola, y esta carta también es la herramienta de venta. */
+const API='https://api.hg-vl.com/v1/hugo';
+const TODOS=[...BESTS,...ROLLS,...NIGIRIS,...FRITURAS];
+
+async function sincronizar(){
+  try{
+    const r=await fetch(API+'/catalogo',{signal:AbortSignal.timeout(6000)});
+    if(!r.ok) return false;
+    const {items}=await r.json();
+    const porSlug=new Map(items.map(i=>[i.slug,i]));
+    const aplicar=x=>{
+      const i=porSlug.get(x.id); if(!i) return;
+      x.sinStock = i.disponible===false;
+      for(const v of i.variantes){
+        const pesos=v.precio/100;                    // el server guarda centavos
+        if(x.op){ const f=x.op.find(o=>String(o[0])===v.slug); if(f) f[1]=pesos; }
+        else if(v.slug==='u') x.p=pesos;
+        else x['p'+v.slug]=pesos;
+        if(v.alcanza===false){ (x.agotadas=x.agotadas||new Set()).add(v.slug); }
+      }
+    };
+    TODOS.forEach(aplicar); COMBIS.forEach(aplicar);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* Lo que no hay hoy no se puede pedir: el botón queda apagado y lo DICE en
+   pantalla. Antes el motivo vivía solo en el `title`, que en un teléfono no
+   existe —no hay hover—, así que el cliente veía un botón gris sin explicación
+   y creía que la carta estaba rota. Esta carta se mira desde el teléfono. */
+function marcarAgotados(){
+  const todos=[...TODOS,...COMBIS];
+  document.querySelectorAll('.add').forEach(b=>{
+    const [id,va]=b.dataset.k.split('|');
+    const x=todos.find(y=>y.id===id); if(!x) return;
+    const sin = x.sinStock || (x.agotadas && x.agotadas.has(va||'u'));
+    b.disabled=!!sin;
+    b.title = sin ? 'Hoy no hay' : '';
+    // El precio se reemplaza por el motivo y se guarda para poder volver: el
+    // stock se repone en el medio del servicio y el repintado no recarga.
+    // Las tarjetas llevan el precio en un <span> adentro del botón; los
+    // combinados lo llevan al lado y el botón solo dice "Agregar". Se escribe
+    // donde haya lugar, que no es el mismo en los dos.
+    const et=b.querySelector('span')||b;
+    if(sin){ if(!et.dataset.textoPrevio) et.dataset.textoPrevio=et.textContent; et.textContent='hoy no hay'; }
+    else if(et.dataset.textoPrevio){ et.textContent=et.dataset.textoPrevio; delete et.dataset.textoPrevio; }
+  });
+}
+
+function pintarTodo(){
+  pintarGrilla('gBests',BESTS);
+  pintarGrilla('gRolls',ROLLS);
+  pintarGrilla('gNigiris',NIGIRIS);
+  pintarGrilla('gFrituras',FRITURAS);
+  $('gCombis').innerHTML=COMBIS.map(combi).join('');
+  document.querySelectorAll('.add').forEach(b=>{
+    b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d));
+  });
+  marcarAgotados();
+  pintarCarro();
+  /* La grilla se acaba de reescribir entera. Lo que colgaba de las tarjetas
+     viejas —el domo de los Hugo Bests— se fue con el innerHTML y hay que
+     volver a montarlo. Se avisa con un evento en vez de llamar a la función
+     directamente: el domo se define más abajo y puede no existir (sin WebGL2
+     no se monta), y así esto no necesita saber nada de él. */
+  document.dispatchEvent(new Event('grilla-pintada'));
+}
+
+pintarTodo();                                  // primero con la carta de adentro
+sincronizar().then(ok=>{ if(ok) pintarTodo(); });  // y se repinta si el server contesta
+
+/* ── PARA CUÁNDO (037) ──────────────────────────────────────────────────────
+   Los horarios los da el SERVIDOR, no la página: es el comercio el que sabe
+   cuándo puede, y si la página los inventara ofrecería turnos que después
+   rebotan. Con la agenda apagada esto no aparece y todo sigue como siempre. */
+let AGENDA = null, PARA = null;
+
+async function traerAgenda(){
+  try{
+    const r = await fetch(API+'/agenda', { signal: AbortSignal.timeout(6000) });
+    if(!r.ok) return;
+    const d = await r.json();
+    if(!d || !d.agenda || !(d.huecos||[]).length) return;
+    AGENDA = d;
+    $('cuando').hidden = false;
+    pintarDias();
+  }catch(e){ /* sin agenda, el pedido sale como siempre */ }
+}
+
+const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+/* «hoy», «mañana», o «sábado 20». El nombre del día se lee más rápido que una
+   fecha, y para una semana alcanza. */
+function nombreDia(iso){
+  const hoy=new Date().toLocaleDateString('en-CA');
+  const man=new Date(Date.now()+86400000).toLocaleDateString('en-CA');
+  if(iso===hoy) return 'Hoy';
+  if(iso===man) return 'Mañana';
+  const d=new Date(iso+'T12:00:00');
+  return DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate();
+}
+
+/* «hoy» y «mañana» no llevan artículo; «sábado 19» sí. Decir «el hoy» suena a
+   traducción automática y es lo primero que nota un cliente. */
+function conArticulo(iso){
+  const n=nombreDia(iso).toLowerCase();
+  return (n==='hoy'||n==='mañana') ? n : 'el '+n;
+}
+
+/* El horario en palabras, resuelto contra los huecos que dio el server: así el
+   texto no depende de la zona horaria del cliente, que puede no ser la nuestra. */
+function frasePara(iso){
+  if(!iso || !AGENDA) return '';
+  const t=Date.parse(iso);
+  const h=AGENDA.huecos.find(x=>Date.parse(x.iso)===t);
+  return h ? `${conArticulo(h.dia)} a las ${h.hora}` : '';
+}
+
+function pintarDias(){
+  const dias=[...new Set(AGENDA.huecos.map(h=>h.dia))];
+  $('cDia').innerHTML = dias.map(d=>`<option value="${d}">${nombreDia(d)}</option>`).join('');
+  pintarHoras();
+}
+function pintarHoras(){
+  const dia=$('cDia').value;
+  const hs=AGENDA.huecos.filter(h=>h.dia===dia);
+  $('cHora').innerHTML = hs.map(h=>`<option value="${h.iso}">${h.hora}</option>`).join('');
+  elegido();
+}
+function elegido(){
+  PARA = $('cuandoSel').hidden ? null : ($('cHora').value || null);
+  const n=$('cuandoNota');
+  if(!AGENDA){ n.textContent=''; return; }
+  n.textContent = PARA
+    ? `Lo tenés listo ${frasePara(PARA)}.`
+    : `También podés encargarlo para más adelante, hasta ${AGENDA.dias} día${AGENDA.dias>1?'s':''} antes.`;
+}
+
+document.addEventListener('click', ev=>{
+  const t=ev.target.closest('.cuando-tab'); if(!t) return;
+  document.querySelectorAll('.cuando-tab').forEach(b=>b.classList.toggle('on', b===t));
+  $('cuandoSel').hidden = t.dataset.cuando!=='luego';
+  elegido();
+});
+document.addEventListener('change', ev=>{
+  if(ev.target.id==='cDia') pintarHoras();
+  else if(ev.target.id==='cHora') elegido();
+});
+
+traerAgenda();
+
+/* ── el pedido, ya escrito, a su WhatsApp ── */
+/* El mensaje se arma con lo que GUARDÓ EL SERVER cuando pudo registrarlo, no
+   con el carrito local. Si Hugo cambió un precio mientras el cliente tenía la
+   carta abierta, el navegador muestra el viejo y el server cobra el nuevo: el
+   que manda es el server, así que el mensaje tiene que decir lo mismo que la
+   comanda que le llega a Hugo. Sin server, se arma con la carta local. */
+function mensaje(pedido){
+  /* Un pedido que el server reconoce como REPETIDO vuelve solo con el código:
+     sin líneas ni total. Tiene código pero no tiene detalle, así que el detalle
+     se arma con el carrito y el código igual se manda. */
+  const det = pedido && pedido.lineas;
+  const li = det
+    ? det.map(l=>`• ${l.cantidad}× ${`${l.nombre} ${l.etiqueta||''}`.trim()} — ${fmt(l.precio*l.cantidad/100)}`).join('\n')
+    : Object.values(carro).map(i=>`• ${i.q}× ${i.n} — ${fmt(i.p*i.q)}`).join('\n');
+  /* El total sale del PEDIDO si lo tiene. Leerlo del carrito funcionaba cuando
+     el mensaje se armaba con el carrito todavía lleno; desde la pantalla de
+     confirmación el carrito ya se vació, y el cliente veía «Total: $ 0». */
+  const total = (pedido && pedido.total != null) ? fmt(pedido.total/100) : fmt(totalCarro());
+  const ref = pedido && pedido.codigo ? `\n\nPedido N° ${pedido.codigo}` : '';
+  /* Si es un encargue, el mensaje lo dice ARRIBA y no pregunta por la demora:
+     preguntar «¿para cuándo?» sobre un pedido que ya tiene día y hora es la
+     forma más rápida de que el cliente crea que no se registró. */
+  const para = (pedido && pedido.para) || PARA;
+  const frase = frasePara(para);
+  const cuando = frase ? `\n\nPara ${frase}.` : '';
+  /* Tres mensajes, no uno. El pedido que ya se tomó desde la página NO pregunta
+     por disponibilidad ni por demora: preguntar eso sobre algo que el sistema
+     aceptó y la cocina ya ve es la forma más rápida de que el cliente crea que
+     no se registró, que es justamente el miedo que la página vino a sacarle. */
+  /* La marca la pone `confirmar()`, no se deduce del pedido: el server le pone
+     `canal: 'web'` a TODO lo que entra por la carta, incluido el que solo pasó
+     por acá camino a WhatsApp, así que ese campo no distingue nada. */
+  const tomado = !!(pedido && pedido.codigo && pedido.__web);
+  if (tomado) {
+    const pago = pedido.pago === 'transferencia'
+      ? '\n\nLo pago por transferencia, te mando el comprobante.'
+      : pedido.pago === 'online' ? '\n\nLo pago online.' : '';
+    return `¡Hola Hugo! Hice este pedido desde la página:\n\n${li}\n\nTotal: ${total}${cuando}${ref}${pago}`;
+  }
+  const cierre = frase ? '\n\n¿Me lo confirman?' : '\n\n¿Me confirman disponibilidad y demora?';
+  return `¡Hola Hugo! Quiero hacer este pedido:\n\n${li}\n\nTotal: ${total}${cuando}${ref}${cierre}`;
+}
+
+/* Clave de idempotencia atada al contenido del carrito: dos toques al botón
+   son un solo pedido, no dos. */
+function claveIdem(){
+  const base=Object.entries(carro).map(([k,v])=>k+':'+v.q).sort().join(',');
+  let h=0; for(const c of base) h=(h*31+c.charCodeAt(0))|0;
+  return 'hugo-'+Math.abs(h).toString(36)+'-'+Math.floor(Date.now()/60000).toString(36);
+}
+
+/* Registra el pedido en el server y devuelve lo que el server guardó
+   (código, líneas y total), o null si no se pudo: en ese caso el pedido igual
+   sale por WhatsApp como toda la vida, armado con la carta local. */
+async function registrar(conDatos){
+  const items=Object.keys(carro).map(k=>{
+    const [item,variante]=k.split('|');
+    return {item, variante: variante||'u', cantidad: carro[k].q};
+  });
+  /* Los datos del cliente solo viajan cuando los cargó: el pedido por WhatsApp
+     sigue entrando pelado, como siempre, y ahí los datos se arreglan hablando. */
+  const extra = conDatos ? {
+    canal:'web', entrega:DATOS.entrega,
+    cliente:{nombre:DATOS.nombre, telefono:DATOS.tel, ...(DATOS.dir?{direccion:DATOS.dir}:{})},
+    ...(DATOS.nota?{nota:DATOS.nota}:{}),
+    ...(DATOS.pago?{pago:DATOS.pago}:{}),
+  } : {};
+  try{
+    const r=await fetch(API+'/pedidos',{
+      method:'POST', headers:{'content-type':'application/json'},
+      body:JSON.stringify({items, idem:claveIdem(), ...(PARA?{para:PARA}:{}), ...extra}),
+      signal:AbortSignal.timeout(8000)
+    });
+    const d=await r.json().catch(()=>null);
+    /* El error del server se devuelve para poder MOSTRARLO. Antes daba igual
+       —el pedido salía por WhatsApp de todos modos—, pero ahora la página es la
+       que toma el pedido: si no entró, el cliente tiene que enterarse acá. */
+    if(!r.ok) return {error:(d&&d.error)||'No se pudo tomar el pedido.'};
+    return d&&d.codigo ? d : {error:'No se pudo tomar el pedido.'};
+  }catch(e){ return {error:'No pudimos conectarnos. Probá de nuevo o escribinos.'}; }
+}
+
+/* ══════════════ EL PEDIDO SE GESTIONA ACÁ (038) ══════════════
+   Tres pasos: el carrito, quién sos y cómo pagás, y qué pasa ahora. WhatsApp
+   deja de ser el único camino y pasa a ser uno más, a un toque en los dos
+   primeros pasos. */
+const DATOS={entrega:'retiro',nombre:'',tel:'',dir:'',nota:'',pago:''};
+
+/* Las formas de pago las dice el SERVER, no esta página: un botón de
+   transferencia sin alias cargado manda al cliente a transferirle a la nada. */
+async function traerCobro(){
+  try{
+    const r=await fetch(API+'/cobro',{signal:AbortSignal.timeout(6000)});
+    if(!r.ok) return;
+    COBRO=await r.json();
+    pintarPagos();
+    /* El número sale del comercio, no del HTML: el día que Hugo lo cambie a 15
+       la página tiene que decir 15 sin que nadie la toque. Y si lo apaga, el
+       texto desaparece en vez de prometer algo que no pasa. */
+    const d=$('dtoCarrito');
+    d.hidden = !dtoEfec();
+    d.textContent = dtoEfec()
+      ? `Retirándolo por el local y pagándolo en efectivo te hacemos ${dtoEfec()}%.` : '';
+  }catch(e){}
+}
+
+const PAGO_TXT={
+  efectivo:['💵','Efectivo','Pagás cuando lo tenés en la mano.'],
+  transferencia:['🏦','Transferencia','Te damos el alias al confirmar.'],
+  online:['💳','Tarjeta o billetera','Pagás online, en el momento.'],
+};
+function formas(){
+  if(!COBRO) return [];
+  const f=[];
+  if(COBRO.efectivo) f.push('efectivo');
+  if(COBRO.transferencia) f.push('transferencia');
+  if((COBRO.online||[]).length) f.push('online');
+  return f;
+}
+/* El descuento por retirar Y pagar en efectivo (039). Lo aplica el server, pero
+   la carta tiene que mostrarlo ANTES de confirmar: enterarse del descuento
+   recién en el ticket no lo hace menos real, lo hace inútil como razón para
+   elegir retiro. La cuenta es la misma que hace el server. */
+const dtoEfec=()=>(COBRO&&COBRO.descuento_efectivo)||0;
+const llevaDto=()=>dtoEfec()>0&&DATOS.entrega==='retiro'&&DATOS.pago==='efectivo';
+const totalConDto=()=>llevaDto()?Math.round(totalCarro()*(100-dtoEfec())/100):totalCarro();
+
+function pintarPagos(){
+  const fs=formas(), caja=$('fPagoBox');
+  /* Con una sola forma no se pregunta: elegir entre una opción es una pregunta
+     que ya tiene respuesta, y una pantalla menos es un pedido más. */
+  if(fs.length<2){ caja.hidden=true; DATOS.pago=fs[0]||''; return; }
+  caja.hidden=false;
+  if(!fs.includes(DATOS.pago)) DATOS.pago=fs[0];
+  $('fPagos').innerHTML=fs.map(k=>{
+    const t=PAGO_TXT[k]||['•',k,''];
+    const sub=k==='efectivo'&&DATOS.entrega==='envio'?'Pagás cuando te lo llevan.':t[2];
+    return `<button type="button" class="pago ${k===DATOS.pago?'on':''}" data-pago="${k}">
+      <em>${t[0]}</em><span class="pago-t"><b>${t[1]}</b><span>${sub}</span></span></button>`;
+  }).join('');
+}
+
+function verPaso(p){
+  PASO=p;
+  $('pLista').hidden   = p!=='carrito';
+  $('pDatos').hidden   = p!=='datos';
+  $('pListo').hidden   = p!=='listo';
+  $('pieCarrito').hidden = p!=='carrito';
+  $('pieDatos').hidden   = p!=='datos';
+  $('pieListo').hidden   = p!=='listo';
+  $('pVolver').hidden  = p!=='datos';
+  $('pCerrar').hidden  = false;
+  $('pTitulo').textContent = p==='carrito'?'Tu pedido':p==='datos'?'Últimos datos':'¡Listo!';
+  $('panel').querySelector('.panel-box').scrollTop=0;
+  if(p==='datos'){ pintarPagos(); pintarTotal2(); }
+}
+
+/* El total tachado y el nuevo al lado. Un total que cambia solo, sin decir por
+   qué, parece un error de la página. */
+function pintarTotal2(){
+  const t=$('pTotal2');
+  t.innerHTML = llevaDto()
+    ? `<s>${fmt(totalCarro())}</s> ${fmt(totalConDto())}`
+    : fmt(totalCarro());
+  $('dtoNota').hidden = !dtoEfec() || llevaDto();
+  $('dtoNota').textContent = dtoEfec()
+    ? `Retirando y pagando en efectivo te hacemos ${dtoEfec()}%.` : '';
+  $('dtoOk').hidden = !llevaDto();
+  $('dtoOk').textContent = llevaDto() ? `Te descontamos ${dtoEfec()}% por retirarlo y pagarlo en efectivo.` : '';
+}
+
+function irADatos(){
+  if(piezasCarro()===0) return;
+  verPaso('datos');
+  setTimeout(()=>{ const n=$('fNombre'); if(n&&!n.value) n.focus(); },80);
+}
+
+/* Lo que se exige es lo que hace falta para CUMPLIR el pedido, y nada más: sin
+   teléfono no hay forma de avisar que está listo, y sin dirección no hay
+   delivery. El resto es opcional a propósito. */
+function validar(){
+  const err=t=>{ $('fErr').textContent=t; return false; };
+  document.querySelectorAll('.campo input').forEach(i=>i.classList.remove('mal'));
+  DATOS.nombre=$('fNombre').value.trim();
+  DATOS.tel=$('fTel').value.trim();
+  DATOS.dir=$('fDir').value.trim();
+  DATOS.nota=$('fNota').value.trim();
+  if(DATOS.nombre.length<2){ $('fNombre').classList.add('mal'); $('fNombre').focus(); return err('Decinos cómo te llamás.'); }
+  if(DATOS.tel.replace(/\D/g,'').length<8){ $('fTel').classList.add('mal'); $('fTel').focus(); return err('Dejanos un teléfono para avisarte cuando esté.'); }
+  if(DATOS.entrega==='envio'&&DATOS.dir.length<5){ $('fDir').classList.add('mal'); $('fDir').focus(); return err('Para el delivery necesitamos la dirección.'); }
+  $('fErr').textContent='';
+  return true;
+}
+
+async function confirmar(){
+  if(MUESTRA) return;            // en la vitrina el botón está apagado; esto es el cinturón
+  if(!validar()) return;
+  const b=$('pConfirmar'); b.disabled=true; b.textContent='Tomando el pedido…';
+  /* El total del carrito ANTES de mandarlo: un pedido que el server reconoce
+     como repetido vuelve solo con el código, y sin esto la pantalla de
+     transferencia le pide al cliente que gire un importe en blanco. */
+  const totalLocal=totalConDto()*100;
+  /* Y una foto de las líneas, por el mismo motivo: un pedido repetido vuelve
+     sin detalle y para entonces el carrito ya no está. */
+  const lineasLocal=Object.values(carro).map(i=>({cantidad:i.q,nombre:i.n,etiqueta:'',precio:i.p*100}));
+  const r=await registrar(true);
+  b.disabled=false; b.textContent='Confirmar el pedido';
+  if(r.error){ $('fErr').textContent=r.error; return; }
+  PEDIDO={total:totalLocal, lineas:lineasLocal, pago:DATOS.pago, ...r, __web:true};
+  /* El orden importa: primero se pasa a la confirmación y RECIÉN AHÍ se vacía
+     el carrito. Al revés, `pintarCarro()` ve cero piezas con el panel todavía
+     en el paso de datos y lo cierra, llevándose el código y el alias antes de
+     que nadie los lea. */
+  pintarListo();
+  verPaso('listo');
+  carro={}; guardar();            // ya está del otro lado
+}
+
+/* La pantalla de después. El código es lo más grande porque es lo único que el
+   cliente va a tener que decir si algo sale mal. */
+function pintarListo(){
+  const p=PEDIDO||{}, pago=p.pago||DATOS.pago;
+  const tot=p.total!=null?fmt(p.total/100):'';
+  const frase=frasePara(p.para||PARA);
+  const cuando=frase?`Lo tenés ${frase}.`:'Te avisamos por WhatsApp cuando esté.';
+  const t=COBRO&&COBRO.transferencia;
+  let medio='';
+  if(pago==='transferencia'&&t){
+    const fila=(et,v)=>v?`<div class="cbrow"><span>${et}</span><b>${esc(v)}</b>
+      <button type="button" class="copiar" data-copiar="${esc(v)}">copiar</button></div>`:'';
+    medio=`<div class="cbdatos">
+      ${fila('Alias',t.alias)}${fila('CBU',t.cbu)}
+      ${t.titular?`<div class="cbrow"><span>Titular</span><b>${esc(t.titular)}</b></div>`:''}
+      ${t.banco?`<div class="cbrow"><span>Banco</span><b>${esc(t.banco)}</b></div>`:''}
+      <div class="cbrow"><span>Importe</span><b>${tot}</b></div>
+    </div>
+    ${t.nota?`<p class="cuando-nota">${esc(t.nota)}</p>`:''}
+    <button class="btn" id="pTransferi">Ya transferí</button>`;
+  }else if(pago==='online'){
+    medio=`<button class="btn" id="pPagar">Pagar ${tot} ahora</button>`;
+  }else{
+    medio=`<p class="cuando-nota">Pagás ${tot} en efectivo cuando ${DATOS.entrega==='envio'?'te lo llevamos':'lo retirás'}.</p>`;
+  }
+  $('pListo').innerHTML=`<p class="cod">Tu número de pedido<b>${esc(p.codigo||'')}</b></p>
+    <p class="cuando-nota" style="text-align:center">${esc(cuando)}</p>${medio}`;
+  $('pieListo').innerHTML=`<button class="btn ghost" id="pWa3">Escribinos por WhatsApp</button>`;
+}
+
+/* Copiar el alias es el gesto que evita el error más caro de la transferencia:
+   tipear mal un CBU. Se copia y se dice que se copió. */
+async function copiar(txt,btn){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){ const a=document.createElement('textarea'); a.value=txt; document.body.appendChild(a);
+    a.select(); try{document.execCommand('copy')}catch(_){} a.remove(); }
+  const antes=btn.textContent; btn.textContent='copiado'; setTimeout(()=>btn.textContent=antes,1400);
+}
+
+async function avisarTransferencia(b){
+  if(!PEDIDO||!PEDIDO.codigo) return;
+  b.disabled=true; b.textContent='Avisando…';
+  try{
+    const r=await fetch(`${API}/pedidos/${encodeURIComponent(PEDIDO.codigo)}/transferencia`,
+      {method:'POST',headers:{'content-type':'application/json'},body:'{}',signal:AbortSignal.timeout(8000)});
+    if(!r.ok) throw new Error();
+    b.textContent='¡Gracias! Lo estamos mirando';
+  }catch(e){ b.disabled=false; b.textContent='No salió: probá de nuevo'; }
+}
+
+/* El pago online lo arma el server con las credenciales del comercio y devuelve
+   la URL del proveedor. La página no ve una credencial nunca. */
+async function pagarOnline(b){
+  if(!PEDIDO||!PEDIDO.codigo||!COBRO||!(COBRO.online||[]).length) return;
+  b.disabled=true; b.textContent='Preparando el pago…';
+  try{
+    const r=await fetch(`${API}/pedidos/${encodeURIComponent(PEDIDO.codigo)}/pagar`,
+      {method:'POST',headers:{'content-type':'application/json'},
+       body:JSON.stringify({proveedor:COBRO.online[0].proveedor}),signal:AbortSignal.timeout(12000)});
+    const d=await r.json().catch(()=>null);
+    if(d&&d.url){ window.location.href=d.url; return; }
+    throw new Error();
+  }catch(e){ b.disabled=false; b.textContent='No se pudo abrir el pago'; }
+}
+
+document.addEventListener('click', ev=>{
+  const t=ev.target.closest('[data-entrega]');
+  if(t){
+    document.querySelectorAll('[data-entrega]').forEach(b=>b.classList.toggle('on',b===t));
+    DATOS.entrega=t.dataset.entrega;
+    $('fDirBox').hidden=DATOS.entrega!=='envio';
+    pintarPagos(); pintarTotal2();
+    return;
+  }
+  const g=ev.target.closest('[data-pago]');
+  if(g){ DATOS.pago=g.dataset.pago; pintarPagos(); pintarTotal2(); return; }
+  const c=ev.target.closest('[data-copiar]');
+  if(c){ copiar(c.dataset.copiar,c); return; }
+  if(ev.target.id==='pTransferi'){ avisarTransferencia(ev.target); return; }
+  if(ev.target.id==='pPagar'){ pagarOnline(ev.target); return; }
+});
+
+traerCobro();
+
+function irAWhatsapp(){
+  if(piezasCarro()===0) return;
+  // La ventana se abre YA, dentro del click: si se abriera después del await,
+  // el navegador la trataría como emergente y la bloquearía.
+  const win=window.open('','_blank');
+  if(win){ win.opener=null; win.document.write('<p style="font:16px system-ui;padding:24px">Preparando tu pedido…</p>'); }
+  registrar().then(pedido=>{
+    const url='https://wa.me/'+WA+'?text='+encodeURIComponent(mensaje(pedido));
+    if(win) win.location.replace(url); else window.location.href=url;
+  });
+}
+/* WhatsApp sigue estando en todos lados —es el canal que el cliente ya conoce—
+   pero ya no es el único. Desde la confirmación manda el pedido YA TOMADO, con
+   su código, así que la conversación arranca sabiendo de qué se habla. */
+if(!MUESTRA){
+  $('bWa').onclick=irAWhatsapp;
+  $('pWa').onclick=irAWhatsapp;
+  $('pWa2').onclick=irAWhatsapp;
+}else{
+  /* Se esconden los tres caminos de envío y se dice por qué, en los dos pies
+     del panel. `pConfirmar` queda a la vista pero apagado: sacarlo escondería
+     el paso que justamente se está mostrando. */
+  for(const id of ['bWa','pWa','pWa2']) $(id).hidden=true;
+  $('pConfirmar').disabled=true;
+  const nota='<p class="desc-nota">Esto es una <b>muestra</b>: acá el pedido no se manda. '
+    +'El de verdad se toma en <a href="https://hugosushi.online/" target="_blank" rel="noopener">hugosushi.online</a>.</p>';
+  $('pieCarrito').insertAdjacentHTML('beforeend',nota);
+  $('pieDatos').insertAdjacentHTML('beforeend',nota);
+}
+$('pSeguir').onclick=irADatos;
+$('pConfirmar').onclick=confirmar;
+$('pVolver').onclick=()=>verPaso('carrito');
+const abrir=()=>{ $('panel').classList.add('on'); document.body.classList.add('pidiendo'); };
+$('bVer').onclick=()=>{ if(PASO==='listo') verPaso('carrito'); abrir(); };
+const cerrar=()=>{ $('panel').classList.remove('on'); document.body.classList.remove('pidiendo');
+  if(PASO==='listo'){ PEDIDO=null; verPaso('carrito'); } };
+$('pCerrar').onclick=cerrar;
+$('panel').onclick=e=>{ if(e.target===$('panel')) cerrar(); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
+document.addEventListener('click',e=>{ if(e.target.id==='pWa3'&&!MUESTRA){
+  // Ya está tomado: el mensaje lo dice y no vuelve a pedirlo.
+  const url='https://wa.me/'+WA+'?text='+encodeURIComponent(mensaje(PEDIDO));
+  window.open(url,'_blank','noopener');
+}});
+$('bVaciar').onclick=()=>{ carro={}; guardar(); };
+
+/* tira de promos, duplicada para que el loop no corte */
+const PROMOS=['Pedidos hasta las 23 h','Promos diarias','Rolls sin corte','Todos los medios de pago',
+  '10% off retirando en efectivo','Delivery & take away','Japanese food en Ushuaia'];
+$('tiraIn').innerHTML=[...PROMOS,...PROMOS].map(p=>`<span>${p} ✦</span>`).join('');
+
+pintarCarro();
+
+// reveals — threshold 0: una sección más alta que el viewport nunca alcanza un umbral porcentual
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+<script>
+'use strict';
+/* ═══════════ Hugo Bests — el mismo domo/paralaje de la inmersiva, acá en
+   la grilla. Un canvas WebGL2 chico por tarjeta (7, muy por debajo del
+   límite de contextos del navegador) en vez de uno compartido: así cada
+   canvas hereda el overflow:hidden + border-radius de su .plato gratis, y
+   alcanza con llenar su propio cuadro — no hace falta reposicionar nada
+   contra el scroll como en inmersivo.html. El fragment shader es
+   FS_PIEZA de inmersivo.html sin cambios (recorte real por flood-fill +
+   domo de paralaje + sombreado por gradiente), sin el paso de sombra (no
+   tiene sentido una sombra llenando toda la tarjeta) y con el paralaje
+   disparado por la distancia del mouse al CENTRO de cada tarjeta puntual
+   — no un mouse global — así cada pieza reacciona por separado. */
+(function(){
+  const gl0=document.createElement('canvas').getContext('webgl2');
+  if(!gl0) return;   // sin WebGL2 la grilla queda exactamente como hoy — el <img> ya está puesto
+
+  function compilar(gl,tipo,src){
+    const s=gl.createShader(tipo); gl.shaderSource(s,src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.error('shader:',gl.getShaderInfoLog(s)); return null; }
+    return s;
+  }
+  function programa(gl,vs,fs){
+    const v=compilar(gl,gl.VERTEX_SHADER,vs), f=compilar(gl,gl.FRAGMENT_SHADER,fs);
+    if(!v||!f) return null;
+    const p=gl.createProgram(); gl.attachShader(p,v); gl.attachShader(p,f); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)){ console.error('link:',gl.getProgramInfoLog(p)); return null; }
+    gl.deleteShader(v); gl.deleteShader(f); return p;
+  }
+  function textura(gl,w,h,datos,lineal){
+    const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,datos||null);
+    const f=lineal?gl.LINEAR:gl.NEAREST;
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  function boxBlur(src,w,h,r){
+    const tmp=new Float32Array(w*h), out=new Float32Array(w*h);
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      let s=0,n=0;
+      for(let k=-r;k<=r;k++){ const xx=x+k; if(xx<0||xx>=w) continue; s+=src[y*w+xx]; n++; }
+      tmp[y*w+x]=s/n;
+    }
+    for(let x=0;x<w;x++) for(let y=0;y<h;y++){
+      let s=0,n=0;
+      for(let k=-r;k<=r;k++){ const yy=y+k; if(yy<0||yy>=h) continue; s+=tmp[yy*w+x]; n++; }
+      out[y*w+x]=s/n;
+    }
+    return out;
+  }
+  const NP=200;   // la tarjeta es chica: no hace falta la resolución de la inmersiva
+  function extraerGeo(img){
+    const w=NP, h=Math.max(8,Math.round(NP*img.height/img.width));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const cx=c.getContext('2d',{willReadFrequently:true});
+    cx.drawImage(img,0,0,w,h);
+    const px=cx.getImageData(0,0,w,h).data;
+    const n=w*h;
+    const lum=new Float32Array(n);
+    for(let i=0;i<n;i++) lum[i]=(0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2])/255;
+    const UMBRAL=0.06;
+    const visitado=new Uint8Array(n);
+    const pila=new Int32Array(n); let tope=0;
+    const push=idx=>{ if(!visitado[idx] && lum[idx]<UMBRAL){ visitado[idx]=1; pila[tope++]=idx; } };
+    for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); }
+    for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+    while(tope>0){
+      const idx=pila[--tope], x=idx%w, y=(idx/w)|0;
+      if(x>0) push(idx-1); if(x<w-1) push(idx+1);
+      if(y>0) push(idx-w); if(y<h-1) push(idx+w);
+    }
+    const bin=new Float32Array(n);
+    for(let i=0;i<n;i++) bin[i]=visitado[i]?0:1;
+    const alfaF=boxBlur(bin,w,h,1);
+    let rel=boxBlur(bin,w,h,8); rel=boxBlur(rel,w,h,8); rel=boxBlur(rel,w,h,6);
+    let relMax=0; for(let i=0;i<n;i++) if(rel[i]>relMax) relMax=rel[i];
+    const relK=relMax>0.02 ? 1/relMax : 1;
+    const out=new Uint8Array(n*4);
+    for(let i=0;i<n;i++){
+      out[i*4]  =Math.round(alfaF[i]*255);
+      out[i*4+1]=Math.round(Math.min(1,rel[i]*relK)*255);
+      out[i*4+2]=0; out[i*4+3]=255;
+    }
+    return {w,h,datos:out};
+  }
+
+  const VS_TRI='#version 300 es\nlayout(location=0) in vec2 a;out vec2 vUV;'+
+               'void main(){vUV=a*0.5+0.5;gl_Position=vec4(a,0.,1.);}';
+  /* idéntico al FS_PIEZA de inmersivo.html */
+  const FS_PIEZA=`#version 300 es
+precision highp float;
+in vec2 vUV; out vec4 o;
+uniform sampler2D uFoto, uGeo;
+uniform vec2 uPar;
+uniform float uFade, uSombra, uZ;
+const vec3 CORAL_LUZ=vec3(0.99,0.42,0.30);
+vec2 geo(vec2 c){ return texture(uGeo, clamp(c,0.001,0.999)).rg; }
+void main(){
+  vec2 g0=geo(vUV);
+  float a0=g0.x;
+  vec2 base=(g0.y-0.55)*uPar*(0.6+1.0*uZ);
+  float baseLen=length(base);
+  if(baseLen>0.05) base*=0.05/baseLen;
+  vec2 cc=vUV+base;
+  vec2 g=geo(cc);
+  float a=g.x, rel=g.y;
+  vec2 dir=uPar*7.0+vec2(1e-5);
+  float disp=0.0032*(0.3+rel);
+  vec3 col;
+  col.r=texture(uFoto, clamp(cc+dir*disp,0.0,1.0)).r;
+  col.g=texture(uFoto, cc).g;
+  col.b=texture(uFoto, clamp(cc-dir*disp,0.0,1.0)).b;
+  if(uSombra>0.5){ o=vec4(0.0,0.0,0.0, a*uFade*(0.16+0.20*uZ)); return; }
+  float epsn=1.0/200.0;
+  float hL=geo(cc-vec2(epsn,0.0)).y, hR=geo(cc+vec2(epsn,0.0)).y;
+  float hD=geo(cc-vec2(0.0,epsn)).y, hU=geo(cc+vec2(0.0,epsn)).y;
+  vec3 normal=normalize(vec3((hL-hR)*3.2,(hD-hU)*3.2,1.0));
+  vec3 luzDir=normalize(vec3(-0.45,0.55,0.7));
+  float diff=max(dot(normal,luzDir),0.0);
+  col*=0.62+0.55*diff;
+  col+=vec3(1.0,0.95,0.85)*pow(diff,6.0)*0.22;
+  col+=CORAL_LUZ*uZ*a*0.14;
+  float alfaOut=a*uFade;
+  o=vec4(max(col,0.0)*alfaOut, alfaOut);
+}`;
+
+  const raton={x:innerWidth/2,y:innerHeight/2};
+  addEventListener('pointermove', e=>{ raton.x=e.clientX; raton.y=e.clientY; }, {passive:true});
+
+  const piezas=[];
+
+  function iniciarTarjeta(cont, slug){
+    const canvas=document.createElement('canvas');
+    canvas.setAttribute('aria-hidden','true');
+    cont.appendChild(canvas);
+    const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,premultipliedAlpha:true});
+    if(!gl) return;
+    const b=gl.createBuffer();
+    const vao=gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER,b);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1, 3,-1, -1,3]),gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+    gl.bindVertexArray(null);
+    const prog=programa(gl,VS_TRI,FS_PIEZA);
+    if(!prog) return;
+    const U=n=>gl.getUniformLocation(prog,n);
+    const uni={uFoto:U('uFoto'),uGeo:U('uGeo'),uPar:U('uPar'),uFade:U('uFade'),uSombra:U('uSombra'),uZ:U('uZ')};
+    const p={cont,canvas,gl,prog,uni,vao,listo:false};
+    piezas.push(p);
+
+    const img=new Image();
+    img.onload=()=>{
+      p.texFoto=textura(gl,2,2,null,true);
+      gl.bindTexture(gl.TEXTURE_2D,p.texFoto);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,img);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+      const m=extraerGeo(img);
+      const fl=new Uint8Array(m.w*m.h*4);
+      for(let y=0;y<m.h;y++) fl.set(m.datos.subarray((m.h-1-y)*m.w*4,(m.h-y)*m.w*4), y*m.w*4);
+      p.texGeo=textura(gl,m.w,m.h,fl,true);
+      p.listo=true;
+      cont.classList.add('domo-listo');   // recién ahora se oculta el <img> — sin flash en blanco
+    };
+    img.src='img/'+slug+'.jpg';
+  }
+
+  function medirTarjeta(p){
+    const rect=p.cont.getBoundingClientRect();
+    const dpr=Math.min(devicePixelRatio||1,1.6);
+    const w=Math.max(2,Math.round(rect.width*dpr)), h=Math.max(2,Math.round(rect.height*dpr));
+    if(p.canvas.width!==w||p.canvas.height!==h){ p.canvas.width=w; p.canvas.height=h; }
+    return rect;
+  }
+
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  let sx=raton.x, sy=raton.y;
+  function cuadro(){
+    sx=lerp(sx,raton.x,0.12); sy=lerp(sy,raton.y,0.12);
+    piezas.forEach(p=>{
+      if(!p.listo) return;
+      const rect=medirTarjeta(p);
+      if(rect.bottom<0||rect.top>innerHeight) return;   // fuera de vista: no dibujar
+      const gl=p.gl;
+      gl.viewport(0,0,p.canvas.width,p.canvas.height);
+      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+
+      const ccx=rect.left+rect.width/2, ccy=rect.top+rect.height/2;
+      /* radio angosto: a diferencia de la inmersiva (una pieza sola, de
+         pantalla completa) acá hay 7 tarjetas juntas — con un radio grande
+         cualquier posición del mouse mantiene 2-3 tarjetas "despiertas" a
+         la vez. Achicado para que cada pieza recién reaccione cuando el
+         mouse está encima o muy cerca, y quede quieta el resto del tiempo. */
+      const radio=Math.max(rect.width,rect.height)*0.62;
+      const dx=(sx-ccx)/radio, dy=(sy-ccy)/radio;
+      const dist=Math.min(1,Math.hypot(dx,dy));
+      const intensidad=1-dist;
+      /* mismo paralaje que en la inmersiva pero a la mitad de magnitud: a
+         escala de tarjeta chica, el desplazamiento interno completo corre
+         a muestrear una zona real distinta del plato (mango vs arroz vs
+         sésamo) y se ve como un remolino de color en vez de profundidad. */
+      const par=[Math.max(-1,Math.min(1,dx))*0.07, -Math.max(-1,Math.min(1,dy))*0.07];
+
+      gl.useProgram(p.prog);
+      gl.bindVertexArray(p.vao);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,p.texFoto); gl.uniform1i(p.uni.uFoto,0);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,p.texGeo); gl.uniform1i(p.uni.uGeo,1);
+      gl.uniform2f(p.uni.uPar,par[0],par[1]);
+      gl.uniform1f(p.uni.uFade,1.0);
+      gl.uniform1f(p.uni.uSombra,0.0);
+      gl.uniform1f(p.uni.uZ,intensidad);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    });
+    requestAnimationFrame(cuadro);
+  }
+
+  /* ── Montar (y volver a montar) ────────────────────────────────────────
+     El domo se montaba UNA vez, al cargar. Pero `sincronizar()` trae los
+     precios de la API y vuelve a llamar a `pintarTodo()`, que reescribe el
+     innerHTML de la grilla: los canvas recién montados se iban con él y la
+     sección quedaba con el <img> plano.
+
+     Lo perverso del caso es que en local NO se notaba. Desde un `localhost`
+     la llamada a la API muere por CORS, `sincronizar()` devuelve false y el
+     repintado nunca ocurre — así que el efecto andaba justo donde no importa
+     y se caía en producción, que es donde lo ve el cliente.
+
+     Ahora se monta cada vez que la grilla se repinta. Soltar los contextos
+     viejos no es opcional: son 7 por pintado y el navegador aguanta unos
+     16 en total — al segundo repintado empezaría a matar los primeros. */
+  function montarDomos(){
+    for(const p of piezas){
+      const ext=p.gl.getExtension('WEBGL_lose_context');
+      if(ext) ext.loseContext();
+    }
+    piezas.length=0;
+    document.querySelectorAll('#gBests .plato-img').forEach(cont=>{
+      const img=cont.querySelector('img');
+      if(!img) return;
+      const slug=(img.getAttribute('src')||'').replace('img/','').replace('.jpg','');
+      if(!slug) return;
+      iniciarTarjeta(cont, slug);
+    });
+  }
+
+  montarDomos();
+  document.addEventListener('grilla-pintada', montarDomos);
+  requestAnimationFrame(cuadro);
+})();
+</script>
+<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Bests (x4 $12.500 / x8 $22.000), Hugo Rolls (x4 $10.000 / x8 $19.000), nigiris, combinados de 16 a 60 piezas y frituras. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
+<script src="chat-ia.js" defer></script>
+</body></html>

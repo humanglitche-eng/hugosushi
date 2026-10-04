@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUGO SUSHI — Experiencia inmersiva</title>
+<meta name="description" content="Hugo Sushi · versión inmersiva: bajás por el agua y cada vez hay más partículas suspendidas, como algas, mientras las piezas crecen hacia vos con paralaje real de mouse.">
+<!-- VERSIÓN INMERSIVA, hecha por Human Glitche · Visual Lab (2026-08-24) para HUGO SUSHI
+     Motor DESCENSO (reemplaza al cardumen de boids del build anterior: los
+     agentes se apelotonaban en una esquina en vez de dispersarse — bug de
+     comportamiento, no de compilación — así que se cambió de mecánica en vez
+     de parchearlo). Sin simulación con feedback (nada de ping-pong ni textura
+     de estado): cada una de ~4000 partículas se resuelve por índice en el
+     vertex shader, con su propia semilla hash — posición, fase de deriva y
+     PROFUNDIDAD NATIVA sesgada con pow(rand,0.55) para que haya más partículas
+     cuanto más profundo, igual que se acumulan las algas en el fondo. El
+     scroll de la página ES la profundidad de cámara: a medida que bajás, la
+     ventana de visibilidad (una gaussiana en distancia-a-profundidad) barre
+     capas cada vez más densas, y el color pasa de verde-alga claro cerca de
+     la superficie a un verde-azulado oscuro en el fondo. Mecánica emparentada
+     con UMBRAL (web/umbral/index.html): ahí el scroll gobierna fase/spin de
+     una materia con home-textures; acá gobierna directamente la profundidad
+     de una columna de agua — más simple porque no hace falta que la materia
+     migre entre formaciones, sólo que la cámara descienda por ella.
+
+     EL PARALAJE — versión Hugo, mismo mecanismo que Sur Genetics, otra fuente
+     de profundidad: allá la profundidad se MEDÍA con un laplaciano porque esas
+     fotos tenían fondo real desenfocado (foco fotográfico real que aprovechar).
+     Acá las 24 piezas son renders de estudio, todo parejo y nítido — no hay
+     foco que medir. La profundidad sale de la FORMA: la silueta real (flood
+     fill desde el borde sobre negro puro, verificado por código — esquina ==
+     #000000 en las 24, ver progress/current.md 2026-08-24) se difumina fuerte
+     y da un DOMO — alto en el centro, bajo en el borde, exactamente como es
+     una pieza de sushi de verdad. Ese domo mueve el contenido con el mouse
+     igual que en Sur Genetics (el centro se desplaza distinto que el borde),
+     lo sombrea con una normal 2D real (no un bisel de contorno: varía en toda
+     la pieza), y ahí mismo nace la dispersión cromática — más fuerte donde el
+     domo está más cerca. Sin marco, sin aro: la pieza flota y crece hacia el
+     ojo con su propio volumen, eso alcanza.
+     El scroll trae cada pieza desde el fondo del agua y AL MISMO TIEMPO hunde
+     la cámara en la columna de partículas; el mouse mueve tanto la deriva del
+     campo suspendido (una corriente suave, no un depredador) como el
+     paralaje interno de la pieza que está al frente — dos capas, un mismo
+     puntero.
+
+     Fotos: las piezas generadas para el catálogo (img/*.jpg).
+     Datos de cada pieza: su ficha real de la carta, sin inventar nada.
+     NO publicado: vive en web/ (staging) hasta que el humano decida. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800;900&family=Russo+One&display=swap" rel="stylesheet">
+<link rel="icon" href="img/logo.jpg">
+<style>
+  :root{ --bg:#05080a; --ink:#f6f1ea; --dim:rgba(246,241,234,.62); --mute:rgba(246,241,234,.36);
+         --rojo:#e44027; --rojo-2:#ff8a68; --cian:#57dbdb; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{background:var(--bg);}
+  body{color:var(--ink);font-family:'Outfit',system-ui,sans-serif;font-weight:300;
+       -webkit-font-smoothing:antialiased;overflow-x:hidden;scrollbar-width:none;}
+  body::-webkit-scrollbar{display:none;}
+  img{max-width:100%;display:block;} a{color:inherit;}
+  .disp{font-family:'Russo One',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.02em;}
+
+  #gl{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0;
+      background:radial-gradient(120% 90% at 50% 40%,#0a1418,#05080a 72%);}
+  .vig{position:fixed;inset:0;pointer-events:none;z-index:3;
+       background:radial-gradient(125% 105% at 50% 45%,transparent 50%,rgba(2,4,5,.78) 100%);}
+  .grain{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.35;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    background-size:240px;}
+  main{position:relative;z-index:2;}
+
+  .hud{position:fixed;z-index:5;font-size:10px;font-weight:500;letter-spacing:.3em;
+       text-transform:uppercase;color:var(--mute);pointer-events:none;}
+  .hud.tl{top:20px;left:22px;} .hud.tr{top:20px;right:24px;text-align:right;}
+  .hud.br{bottom:18px;right:24px;text-align:right;}
+  .hud a{color:rgba(246,241,234,.55);text-decoration:none;pointer-events:auto;}
+  .hud a:hover{color:var(--rojo-2);}
+  .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--rojo);
+       margin-right:7px;animation:pd 2.4s infinite;}
+  @keyframes pd{0%,100%{opacity:.25}50%{opacity:1}}
+  #prog{position:fixed;top:0;right:9px;width:2px;height:100vh;z-index:5;background:rgba(246,241,234,.07);}
+  #prog i{position:absolute;top:0;left:0;width:100%;height:0;
+          background:linear-gradient(180deg,var(--cian),var(--rojo));}
+
+  #intro{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;
+         justify-content:center;text-align:center;transition:opacity .8s ease;background:rgba(5,8,10,.55);}
+  #intro.off{opacity:0;pointer-events:none;}
+  #intro img{width:88px;height:88px;border-radius:12px;margin-bottom:22px;
+             box-shadow:0 0 40px rgba(228,64,39,.35);}
+  #intro .name{font-family:'Russo One',sans-serif;font-size:clamp(2rem,5.6vw,3.4rem);letter-spacing:.01em;}
+  #intro .tag{font-size:11px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;
+              color:var(--cian);margin-top:12px;}
+  #intro .cue{margin-top:52px;font-size:11px;font-weight:500;letter-spacing:.26em;
+              text-transform:uppercase;color:var(--dim);animation:bob 2.4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(7px);opacity:1}}
+
+  .pre{height:100vh;}
+  .s{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+     text-align:center;padding:16vh 26px;}
+  .kin{font-size:clamp(2.1rem,5.6vw,4.4rem);font-weight:900;line-height:1.02;letter-spacing:-.03em;max-width:18ch;}
+  .kin i{font-style:normal;color:var(--rojo);}
+  .statement{font-size:clamp(1rem,2vw,1.35rem);color:var(--dim);max-width:36ch;line-height:1.7;margin-top:26px;}
+
+  .ej{height:200vh;position:relative;}
+  .ej-txt{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;
+          padding:0 clamp(26px,7vw,90px);pointer-events:none;}
+  .ej:nth-child(even) .ej-txt{align-items:flex-end;text-align:right;}
+  .ej-in{max-width:27ch;opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.16,1,.3,1);}
+  .ej-in.on{opacity:1;transform:none;}
+  .ej-num{font-size:10px;font-weight:500;letter-spacing:.34em;color:var(--cian);text-transform:uppercase;}
+  .ej-in h2{font-family:'Russo One',sans-serif;font-size:clamp(1.7rem,4vw,2.9rem);line-height:1.04;margin:12px 0 4px;}
+  .ej-desc{margin-top:10px;font-size:13.5px;color:var(--dim);line-height:1.6;max-width:30ch;}
+  .ej-precio{display:inline-block;margin-top:16px;font-size:12.5px;color:var(--rojo-2);
+    border:1px solid rgba(228,64,39,.34);padding:6px 14px;border-radius:999px;}
+  @media(max-width:900px){
+    .ej-txt{justify-content:flex-end;padding-bottom:9vh;align-items:center;text-align:center;
+            background:linear-gradient(transparent 28%,rgba(5,8,10,.62) 60%,rgba(5,8,10,.88));}
+    .ej:nth-child(even) .ej-txt{align-items:center;text-align:center;}
+    .ej-in{max-width:34ch;} .ej-desc{max-width:32ch;margin-left:auto;margin-right:auto;}
+  }
+
+  .finale .enter{display:inline-block;border:1px solid var(--rojo);color:var(--rojo-2);
+    font-size:12.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;padding:15px 40px;
+    text-decoration:none;transition:all .25s;margin:8px 7px 0;}
+  .finale .enter:hover{background:var(--rojo);color:#1a0a06;}
+  .finale .enter.solid{background:var(--rojo);color:#1a0a06;}
+  .finale .enter.solid:hover{filter:brightness(1.1);}
+  .demo-note{margin-top:38px;font-size:11px;color:var(--mute);max-width:56ch;line-height:1.6;}
+  .demo-tag{position:fixed;left:16px;bottom:44px;z-index:5;font-size:10.5px;color:var(--mute);
+    background:rgba(5,8,10,.5);border:1px solid rgba(246,241,234,.12);padding:5px 11px;pointer-events:none;}
+  #aviso{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    text-align:center;padding:30px;background:var(--bg);font-size:14px;color:var(--dim);line-height:1.7;}
+  @media(max-width:700px){ .hud.tr{display:none;} .hud.tl,.hud.br{font-size:9px;letter-spacing:.2em;} }
+  @media(prefers-reduced-motion:reduce){ .ej-in{transition:none;} #intro .cue{animation:none;} }
+</style>
+</head>
+<body>
+
+<canvas id="gl"></canvas>
+<div class="vig"></div>
+<div class="grain"></div>
+<div id="prog"><i></i></div>
+
+<div class="hud tl"><span class="dot"></span>Hugo Sushi · inmersiva</div>
+<div class="hud tr" id="hudFps">descenso · profundidad</div>
+<div class="hud br"><a href="index.html">← volver al catálogo</a></div>
+
+
+<div id="intro">
+  <img src="img/logo.jpg" alt="Hugo Sushi">
+  <div class="name">HUGO SUSHI</div>
+  <div class="tag">El sushi que nada hasta vos</div>
+  <div class="cue">Bajá para entrar ↓</div>
+</div>
+
+<main>
+  <div class="pre"></div>
+  <section class="s">
+    <h1 class="kin">Ningún pez nada solo.<br><i>Ningún roll tampoco.</i></h1>
+    <p class="statement">Se arman igual: pieza por pieza, hasta que aparece algo entero. Así es un cardumen. Así es tu pedido — vos elegís las piezas, nosotros las juntamos.</p>
+  </section>
+
+  <div id="ejemplares"></div>
+
+  <section class="s finale">
+    <h2 class="kin">Cada pieza,<br><i>armada al momento.</i></h2>
+    <p class="statement">Lo que viste es real: nuestra carta, con lo que más se pide. Elegí las tuyas en el catálogo y armá tu pedido — te llega directo por WhatsApp, ya escrito.</p>
+    <div style="margin-top:38px">
+      <a class="enter solid" href="index.html">Ver el catálogo completo</a>
+      <a class="enter" href="https://wa.me/5492901300080?text=Hola%21%20Vi%20la%20experiencia%20inmersiva%20y%20quiero%20hacer%20un%20pedido." target="_blank" rel="noopener">Pedir por WhatsApp</a>
+    </div>
+    <p class="demo-note">Sitio hecho por Human Glitche · Visual Lab. El motor de cardumen (boids de Reynolds) y el recorte real de cada pieza son desarrollo propio del estudio.</p>
+  </section>
+</main>
+
+<div id="aviso">Esta experiencia necesita WebGL2.<br>Podés ver el catálogo completo <a href="index.html" style="color:var(--rojo-2)">acá</a>.</div>
+
+<script>
+'use strict';
+/* ═══════════ las piezas: ficha real de la carta ═══════════ */
+const PIEZAS=[
+ {slug:'hawai-smoke', nombre:'Hawai Smoke',
+  desc:'Avocado, queso y mango. Cubierta de salmón flambeado con manteca ahumada.',
+  precio:'x4 · $12.500 · x8 · $22.000'},
+ {slug:'beetroot', nombre:'Beetroot',
+  desc:'Langostinos apanados y palta. Cubierta de remolacha, mayo acevichada, verdeo y togarashi.',
+  precio:'x4 · $12.500 · x8 · $22.000'},
+ {slug:'nigiri-flambeado', nombre:'Nigiri de Salmón',
+  desc:'Flambeado con manteca ahumada.',
+  precio:'x3 · $10.000 · x6 · $19.000'},
+ {slug:'ebi-furai', nombre:'Ebi Furai',
+  desc:'Langostinos apanados, con salsa de mostaza y miel.',
+  precio:'x7 piezas · $20.000'},
+ {slug:'nikkei-roll', nombre:'Nikkei Roll',
+  desc:'Langostinos y avocado. Cubierta de salmón, avocado y verdeo, con salsa nikkei.',
+  precio:'x4 · $12.500 · x8 · $22.000'},
+ {slug:'sashimi-salmon', nombre:'Sashimi de Salmón',
+  desc:'Láminas de salmón rosado.',
+  precio:'x3 · $12.000 · x6 · $20.000'}
+];
+
+document.getElementById('ejemplares').innerHTML=PIEZAS.map((e,i)=>`
+ <section class="ej" data-i="${i}">
+  <div class="ej-txt"><div class="ej-in">
+    <div class="ej-num">Pieza ${String(i+1).padStart(2,'0')} / ${String(PIEZAS.length).padStart(2,'0')}</div>
+    <h2>${e.nombre}</h2>
+    <p class="ej-desc">${e.desc}</p>
+    <span class="ej-precio">${e.precio}</span>
+  </div></div>
+ </section>`).join('');
+
+/* ═══════════ WebGL ═══════════ */
+const cv=document.getElementById('gl');
+const gl=cv.getContext('webgl2',{antialias:false,alpha:false,powerPreference:'high-performance'});
+if(!gl){ document.getElementById('aviso').style.display='flex'; }
+
+function compilar(tipo,src){
+  const s=gl.createShader(tipo); gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+    console.error('shader:',gl.getShaderInfoLog(s)); return null; }
+  return s;
+}
+function programa(vs,fs){
+  const v=compilar(gl.VERTEX_SHADER,vs), f=compilar(gl.FRAGMENT_SHADER,fs);
+  if(!v||!f) return null;
+  const p=gl.createProgram(); gl.attachShader(p,v); gl.attachShader(p,f); gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){ console.error('link:',gl.getProgramInfoLog(p)); return null; }
+  gl.deleteShader(v); gl.deleteShader(f); return p;
+}
+function textura(w,h,datos,lineal){
+  const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,datos||null);
+  const f=lineal?gl.LINEAR:gl.NEAREST;
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  return t;
+}
+
+/* Dos geometrías: el triángulo que cubre pantalla (fondo de profundidad) y
+   el cuadrado de las piezas. El campo de partículas usa su propio VAO de
+   índices, más abajo. */
+const vaoTri=(()=>{ const v=gl.createVertexArray(); gl.bindVertexArray(v);
+  const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1, 3,-1, -1,3]),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null); return v; })();
+const vaoQuad=(()=>{ const v=gl.createVertexArray(); gl.bindVertexArray(v);
+  const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1, 1,-1, -1,1, 1,1]),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null); return v; })();
+const dibTri =()=>{ gl.bindVertexArray(vaoTri);  gl.drawArrays(gl.TRIANGLES,0,3); };
+const dibQuad=()=>{ gl.bindVertexArray(vaoQuad); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); };
+
+const VS_TRI='#version 300 es\nlayout(location=0) in vec2 a;out vec2 uv;'+
+             'void main(){uv=a*0.5+0.5;gl_Position=vec4(a,0.,1.);}';
+
+/* ═══════════ FONDO — la columna de agua, coloreada por profundidad ═══════════ */
+const FONDO=`#version 300 es
+precision highp float;
+in vec2 uv; out vec4 o;
+uniform float uProf, uT;
+const vec3 SUP_C  =vec3(0.045,0.180,0.190);
+const vec3 MED_C  =vec3(0.018,0.095,0.115);
+const vec3 HOND_C =vec3(0.008,0.048,0.062);
+const vec3 FONDO_C=vec3(0.004,0.018,0.026);
+float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+vec3 columna(float t){
+ t=clamp(t,0.0,1.0);
+ if(t<0.32) return mix(SUP_C,MED_C,smoothstep(0.0,0.32,t));
+ if(t<0.68) return mix(MED_C,HOND_C,smoothstep(0.32,0.68,t));
+ return mix(HOND_C,FONDO_C,smoothstep(0.68,1.0,t));
+}
+void main(){
+ vec3 base=columna(uProf);
+ /* luz de superficie: entra de arriba, se apaga con la profundidad */
+ float sol=smoothstep(1.0,0.05,uv.y)*exp(-uProf*2.1);
+ base+=vec3(0.10,0.28,0.26)*sol;
+ /* rayos de sol: bandas anchas que derivan despacio, se apagan igual que él */
+ float rayo=sin((uv.x*7.0-uv.y*1.1)*3.14159+uT*0.05)*0.5+0.5;
+ base+=vec3(0.05,0.12,0.11)*rayo*sol*0.8;
+ base+=(hash21(gl_FragCoord.xy+fract(uT)*31.3)-0.5)*0.018;
+ o=vec4(max(base,0.0),1.0);
+}`;
+
+/* ═══════════ PARTÍCULAS — descenso, no cardumen ═══════════
+   Reemplaza al motor de boids (se apelotonaba en una esquina en vez de
+   dispersarse — bug de comportamiento). Acá no hay bandada: cada partícula
+   es un punto suspendido que resuelve TODO desde su índice en el vertex
+   shader — sin textura de estado, sin ping-pong. Su PROFUNDIDAD NATIVA sale
+   de pow(hash,0.55): sesga la distribución hacia el fondo, así que a medida
+   que uProf (=scroll) crece, más partículas caen dentro de la ventana de
+   visibilidad — "cada vez más algas" nace de la distribución, no de sumar
+   partículas en JS. Mecánica emparentada con UMBRAL (scroll→profundidad de
+   cámara), pero sin migración entre formaciones: acá sólo hace falta que la
+   cámara descienda por una columna ya poblada. */
+const PART_VS=`#version 300 es
+precision highp float;
+layout(location=0) in float aIdx;
+uniform float uProf,uT,uDPR; uniform vec2 uPar;
+out vec3 vCol; out float vAlfa;
+const float PROF_MAX=4.0;
+float hash11(float n){ return fract(sin(n)*43758.5453123); }
+void main(){
+ float i=aIdx;
+ float r1=hash11(i*0.1031), r2=hash11(i*0.1091+7.1),
+       r3=hash11(i*0.1731+3.7), r4=hash11(i*0.0973+11.3), r5=hash11(i*0.0417+5.9);
+ float dNat=pow(r1,0.55)*PROF_MAX;
+ float velSeed=0.35+r5*0.9, fase=r4*6.2832;
+
+ /* deriva lenta: suspendida en el agua, no nada hacia ningún lado */
+ float dx=sin(uT*0.09*velSeed+fase)*0.022;
+ float dy=cos(uT*0.07*velSeed+fase*1.3)*0.020;
+
+ float rel=dNat-uProf;
+ float visible=exp(-rel*rel*1.55);
+
+ float x=(r2*2.0-1.0)*1.18+dx+uPar.x*0.28;
+ float y=(r3*2.0-1.0)*1.25+dy+uPar.y*0.16;
+ gl_Position=vec4(x,y,0.0,1.0);
+
+ float cerca=clamp(1.0-abs(rel)*0.85,0.0,1.0);
+ gl_PointSize=uDPR*mix(1.0,3.4,r2)*(0.55+0.85*cerca);
+ vAlfa=visible*(0.12+0.58*cerca);
+
+ vec3 claro=vec3(0.40,0.86,0.56), oscuro=vec3(0.09,0.28,0.33);
+ vec3 col=mix(claro,oscuro,clamp(dNat/PROF_MAX,0.0,1.0));
+ float destello=step(0.986,hash11(i*3.77));
+ col=mix(col,vec3(0.93,0.40,0.28),destello*0.65);
+ vCol=col;
+}`;
+
+const PART_FS=`#version 300 es
+precision highp float;
+in vec3 vCol; in float vAlfa; out vec4 o;
+void main(){
+ vec2 d=(gl_PointCoord-0.5)*2.0;
+ float r2=dot(d,d); if(r2>1.0) discard;
+ float a=smoothstep(1.0,0.0,r2)*vAlfa;
+ o=vec4(vCol,a);
+}`;
+
+/* ═══════════ PIEZA — recorte real + domo de paralaje ═══════════ */
+const VS_QUAD=`#version 300 es
+layout(location=0) in vec2 a;
+uniform vec2 uCentro, uTam; uniform float uGiro;
+out vec2 vUV;
+void main(){
+  vUV=a*0.5+0.5;
+  float c=cos(uGiro), s=sin(uGiro);
+  vec2 p=vec2(a.x*c-a.y*s*0.12, a.x*s*0.12+a.y);
+  gl_Position=vec4(uCentro+p*uTam,0.0,1.0);
+}`;
+
+const FS_PIEZA=`#version 300 es
+precision highp float;
+in vec2 vUV; out vec4 o;
+uniform sampler2D uFoto, uGeo;    /* uGeo.r = alfa (recorte), uGeo.g = relieve (domo) */
+uniform vec2 uPar;                /* paralaje: dirección/fuerza del mouse */
+uniform float uFade, uSombra, uZ;
+const vec3 CORAL_LUZ=vec3(0.99,0.42,0.30);
+
+vec2 geo(vec2 c){ return texture(uGeo, clamp(c,0.001,0.999)).rg; }
+
+void main(){
+  vec2 g0=geo(vUV);
+  float a0=g0.x;
+
+  /* Paralaje interno real: el relieve es un DOMO derivado de la silueta
+     -alto en el centro, bajo en el borde, como es de verdad una pieza de
+     sushi- y desplaza la lectura de la foto según el mouse. El centro se
+     mueve distinto que el borde: es el mismo mecanismo de Sur Genetics,
+     pero la profundidad sale de la FORMA real en vez de sacarla del foco
+     fotográfico -acá no hay foco que aprovechar, son renders de estudio-. */
+  vec2 base=(g0.y-0.55)*uPar*(0.6+1.0*uZ);
+  /* tope duro: el domo cae rápido cerca del borde (pieza chica, silueta
+     angosta), y ahí un desplazamiento grande hace que píxeles vecinos en
+     pantalla lean puntos muy separados de la foto — se ve como un desgarro,
+     no como paralaje. Con el tope, cualquier posición de mouse queda prolija. */
+  float baseLen=length(base);
+  if(baseLen>0.05) base*=0.05/baseLen;
+  vec2 cc=vUV+base;
+  vec2 g=geo(cc);
+  float a=g.x, rel=g.y;
+
+  /* dispersión: crece donde el domo está más cerca, no en un borde inventado */
+  vec2 dir=uPar*7.0+vec2(1e-5);
+  float disp=0.0032*(0.3+rel);
+  vec3 col;
+  col.r=texture(uFoto, clamp(cc+dir*disp,0.0,1.0)).r;
+  col.g=texture(uFoto, cc).g;
+  col.b=texture(uFoto, clamp(cc-dir*disp,0.0,1.0)).b;
+
+  if(uSombra>0.5){
+    o=vec4(0.0,0.0,0.0, a*uFade*(0.16+0.20*uZ));
+    return;
+  }
+
+  /* Sombreado real por el gradiente del relieve — una normal 2D del domo,
+     iluminada. A diferencia de un bisel de contorno, esto varía en TODA la
+     pieza (centro más claro, bordes cayendo), y es lo que de verdad hace
+     que un recorte plano lea como un objeto con volumen. */
+  float epsn=1.0/260.0;
+  float hL=geo(cc-vec2(epsn,0.0)).y, hR=geo(cc+vec2(epsn,0.0)).y;
+  float hD=geo(cc-vec2(0.0,epsn)).y, hU=geo(cc+vec2(0.0,epsn)).y;
+  vec3 normal=normalize(vec3((hL-hR)*3.2,(hD-hU)*3.2,1.0));
+  vec3 luzDir=normalize(vec3(-0.45,0.55,0.7));
+  float diff=max(dot(normal,luzDir),0.0);
+  col*=0.62+0.55*diff;
+  col+=vec3(1.0,0.95,0.85)*pow(diff,6.0)*0.22;
+
+  col+=CORAL_LUZ*uZ*a*0.14;
+  float alfaOut=a*uFade;
+  o=vec4(max(col,0.0)*alfaOut, alfaOut);
+}`;
+
+/* ═══════════ recorte real por flood fill (el corazón del efecto) ═══════════ */
+const NP=260;
+function boxBlur(src,w,h,r){
+  const tmp=new Float32Array(w*h), out=new Float32Array(w*h);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    let s=0,n=0;
+    for(let k=-r;k<=r;k++){const xx=x+k; if(xx<0||xx>=w)continue; s+=src[y*w+xx]; n++;}
+    tmp[y*w+x]=s/n;
+  }
+  for(let x=0;x<w;x++) for(let y=0;y<h;y++){
+    let s=0,n=0;
+    for(let k=-r;k<=r;k++){const yy=y+k; if(yy<0||yy>=h)continue; s+=tmp[yy*w+x]; n++;}
+    out[y*w+x]=s/n;
+  }
+  return out;
+}
+/* Flood fill desde el borde: sólo el negro CONECTADO al marco es fondo. El
+   alga nori es negra pero está rodeada de arroz, así que el flood fill no la
+   alcanza y queda como parte de la pieza — a diferencia de un umbral simple,
+   que la borraría igual que al fondo. */
+function extraerGeo(img){
+  const w=NP, h=Math.max(8,Math.round(NP*img.height/img.width));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const cx=c.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(img,0,0,w,h);
+  const px=cx.getImageData(0,0,w,h).data;
+  const n=w*h;
+  const lum=new Float32Array(n);
+  for(let i=0;i<n;i++) lum[i]=(0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2])/255;
+  const UMBRAL=0.06;
+  const visitado=new Uint8Array(n);
+  const pila=new Int32Array(n); let tope=0;
+  const push=idx=>{ if(!visitado[idx] && lum[idx]<UMBRAL){ visitado[idx]=1; pila[tope++]=idx; } };
+  for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); }
+  for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+  while(tope>0){
+    const idx=pila[--tope], x=idx%w, y=(idx/w)|0;
+    if(x>0) push(idx-1); if(x<w-1) push(idx+1);
+    if(y>0) push(idx-w); if(y<h-1) push(idx+w);
+  }
+  const bin=new Float32Array(n);
+  for(let i=0;i<n;i++) bin[i]=visitado[i]?0:1;
+
+  const alfaF=boxBlur(bin,w,h,1);   // recorte: apenas suavizado, fiel a la silueta real
+
+  /* domo de paralaje: el mismo binario, difuminado fuerte — alto en el
+     centro, bajo en el borde, como es de verdad una pieza redondeada de
+     sushi. No es una medida, es la forma real desenfocada a propósito. */
+  let rel=boxBlur(bin,w,h,10); rel=boxBlur(rel,w,h,10); rel=boxBlur(rel,w,h,8);
+  let relMax=0; for(let i=0;i<n;i++) if(rel[i]>relMax) relMax=rel[i];
+  const relK=relMax>0.02 ? 1/relMax : 1;   // normalizado: una pieza angosta igual llega a 1 en su cresta
+
+  const out=new Uint8Array(n*4);
+  for(let i=0;i<n;i++){
+    out[i*4]  =Math.round(alfaF[i]*255);
+    out[i*4+1]=Math.round(Math.min(1,rel[i]*relK)*255);
+    out[i*4+2]=0; out[i*4+3]=255;
+  }
+  return {w,h,datos:out};
+}
+
+/* ═══════════ montaje ═══════════ */
+if(gl){
+ const pFondo=programa(VS_TRI,FONDO);
+ const pPart=programa(PART_VS,PART_FS);
+ const pPieza=programa(VS_QUAD,FS_PIEZA);
+
+ if(!pFondo||!pPart||!pPieza){
+   document.getElementById('aviso').style.display='flex';
+ } else {
+  const U=(p,ns)=>{const o={}; ns.forEach(n=>o[n]=gl.getUniformLocation(p,n)); return o;};
+  const uFondo=U(pFondo,['uProf','uT']);
+  const uPart=U(pPart,['uProf','uT','uDPR','uPar']);
+  const uPz=U(pPieza,['uCentro','uTam','uGiro','uFoto','uGeo','uPar','uFade','uSombra','uZ']);
+
+  /* el campo suspendido: un índice = una partícula, todo lo demás sale del
+     hash en GPU (ver PART_VS) — no hace falta subir posiciones desde JS. */
+  const NPART=4000;
+  const vaoPart=gl.createVertexArray(); gl.bindVertexArray(vaoPart);
+  const idxPart=new Float32Array(NPART); for(let k=0;k<NPART;k++) idxPart[k]=k;
+  const bIdxPart=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,bIdxPart);
+  gl.bufferData(gl.ARRAY_BUFFER,idxPart,gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,1,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+
+  /* carga de fotos + su geometría (recorte + domo de paralaje) */
+  PIEZAS.forEach(e=>{
+    const img=new Image();
+    img.onload=()=>{
+      e.texFoto=textura(2,2,null,true);
+      gl.bindTexture(gl.TEXTURE_2D,e.texFoto);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,img);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+      const m=extraerGeo(img);
+      const fl=new Uint8Array(m.w*m.h*4);
+      for(let y=0;y<m.h;y++) fl.set(m.datos.subarray((m.h-1-y)*m.w*4,(m.h-y)*m.w*4), y*m.w*4);
+      e.texGeo=textura(m.w,m.h,fl,true);
+      e.rel=img.width/img.height;
+      e.listo=true;
+    };
+    img.src='img/'+e.slug+'.jpg';
+  });
+
+  const DPR=Math.min(devicePixelRatio||1,1.4);
+  let W=2,H=2;
+  const raton={x:.5,y:.5,sx:.5,sy:.5,abajo:0};
+
+  function medir(){
+    const nW=Math.max(2,Math.floor(innerWidth*DPR)), nH=Math.max(2,Math.floor(innerHeight*DPR));
+    /* misma guarda que en Sur Genetics: reasignar cv.width/height por cuadro
+       reasigna el buffer de dibujo aunque el valor no cambie — cuesta más
+       que el propio shader. */
+    if(nW===W&&nH===H) return;
+    W=nW; H=nH;
+    cv.width=W; cv.height=H; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+  }
+  addEventListener('resize',medir); medir();
+
+  addEventListener('pointermove',e=>{ raton.x=e.clientX/innerWidth; raton.y=e.clientY/innerHeight; });
+  addEventListener('pointerdown',()=>{ raton.abajo=1; });
+  addEventListener('pointerup',()=>{ raton.abajo=0; });
+  addEventListener('deviceorientation',e=>{
+    if(e.gamma==null) return;
+    raton.x=0.5+Math.max(-1,Math.min(1,e.gamma/38))*0.5;
+    raton.y=0.5+Math.max(-1,Math.min(1,((e.beta||45)-45)/38))*0.5;
+  });
+
+  const intro=document.getElementById('intro');
+  const barra=document.querySelector('#prog i');
+  addEventListener('scroll',()=>{
+    intro.classList.toggle('off',scrollY>60);
+    const max=document.body.scrollHeight-innerHeight;
+    barra.style.height=(max>0?scrollY/max*100:0)+'%';
+  },{passive:true});
+
+  const io=new IntersectionObserver(es=>es.forEach(x=>{
+    if(x.isIntersecting) x.target.querySelector('.ej-in').classList.add('on');
+  }),{threshold:.35});
+  document.querySelectorAll('.ej').forEach(s=>io.observe(s));
+
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const suave=t=>t*t*(3-2*t);
+  let t0=performance.now(), fps=60, acum=0, cuadros=0, profS=0;
+  const hudFps=document.getElementById('hudFps');
+  const secciones=[...document.querySelectorAll('.ej')];
+  const PROF_MAX=4.0;
+
+  function cuadro(now){
+    const dt=Math.min(0.05,(now-t0)/1000); t0=now;
+    const t=now/1000;
+    raton.sx=lerp(raton.sx,raton.x,0.08); raton.sy=lerp(raton.sy,raton.y,0.08);
+    medir();
+    const asp=W/H;
+
+    /* la profundidad de cámara ES el scroll: 0 en la superficie (intro),
+       PROF_MAX al fondo de la página (finale) — cuanto más bajás, más denso
+       el campo de partículas que atraviesa la ventana de visibilidad. */
+    const maxScroll=document.body.scrollHeight-innerHeight;
+    const profRaw=(maxScroll>0?scrollY/maxScroll:0)*PROF_MAX;
+    profS=lerp(profS,profRaw,0.06);
+
+    /* 1 · fondo: la columna de agua entera, coloreada por profundidad */
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.viewport(0,0,W,H);
+    gl.disable(gl.BLEND);
+    gl.useProgram(pFondo);
+    gl.bindVertexArray(vaoTri);
+    gl.uniform1f(uFondo.uProf,profS/PROF_MAX);
+    gl.uniform1f(uFondo.uT,t);
+    dibTri();
+
+    /* 2 · el campo suspendido: cada punto decide solo si le toca aparecer */
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(pPart);
+    gl.bindVertexArray(vaoPart);
+    gl.uniform1f(uPart.uProf,profS);
+    gl.uniform1f(uPart.uT,t);
+    gl.uniform1f(uPart.uDPR,Math.max(1,DPR));
+    gl.uniform2f(uPart.uPar,(raton.sx-0.5),-(raton.sy-0.5));
+    gl.drawArrays(gl.POINTS,0,NPART);
+    gl.disable(gl.BLEND);
+
+    /* 3 · las piezas, con paralaje real de mouse */
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);   /* alfa premultiplicado */
+    const angosto=innerWidth<900;
+    /* mismo vector para las 6: la fuerza por-pieza la da uZ (0.6+1.0*uZ) en el shader */
+    const par=[(raton.sx-0.5)*0.16, -(raton.sy-0.5)*0.16];
+
+    secciones.forEach((sec,i)=>{
+      const e=PIEZAS[i]; if(!e||!e.listo) return;
+      const r=sec.getBoundingClientRect();
+      const p=(innerHeight-r.top)/(r.height+innerHeight);
+      if(p<-0.02||p>1.02) return;
+      const z=suave(Math.max(0,Math.min(1,p)));
+      const escala=0.30+0.62*z*z;
+      const fade=Math.min(1,p/0.16)*(1-suave(Math.max(0,Math.min(1,(p-0.70)/0.26))));
+      if(fade<=0.001) return;
+      let alto=escala, ancho=alto*(e.rel||1)/asp;
+      const maxAncho=angosto?0.86:1.05;
+      if(ancho>maxAncho){ const k=maxAncho/ancho; ancho*=k; alto*=k; }
+      const cx=angosto? 0 : (i%2===0? 0.30:-0.30)*(1-z*0.85);
+      const cy=angosto? (0.34+0.42*z) : (-0.10+0.55*z);
+      const giro=(raton.sx-0.5)*0.10+Math.sin(t*0.25+i)*0.02;
+
+      gl.useProgram(pPieza);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,e.texFoto); gl.uniform1i(uPz.uFoto,0);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,e.texGeo); gl.uniform1i(uPz.uGeo,1);
+      gl.uniform2f(uPz.uPar,par[0],par[1]);
+      gl.uniform1f(uPz.uFade,fade);
+      gl.uniform1f(uPz.uZ,z);
+      gl.uniform1f(uPz.uGiro,giro);
+      gl.uniform2f(uPz.uTam,ancho,alto);
+
+      /* sombra, para que flote sobre el agua en vez de quedar pegada */
+      gl.uniform1f(uPz.uSombra,1.0);
+      gl.uniform2f(uPz.uCentro,cx+0.014,cy-0.022);
+      dibQuad();
+
+      /* la pieza */
+      gl.uniform1f(uPz.uSombra,0.0);
+      gl.uniform2f(uPz.uCentro,cx,cy);
+      dibQuad();
+    });
+
+    acum+=dt; cuadros++;
+    if(acum>1){ fps=Math.round(cuadros/acum); acum=0; cuadros=0;
+      hudFps.textContent='descenso · profundidad · '+fps+' fps'; }
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+ }
+}
+</script>
+</body></html>
