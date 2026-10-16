@@ -373,10 +373,10 @@
     <div class="sec-head">
       <h2 class="disp">Hugo <em>Bests</em></h2>
       <p>Los que nos hicieron famosos. Cada uno con su cubierta y su salsa — los que más se piden y los que más se sacan fotos.</p>
-      <span class="precio-tira">x4 · $12.500 &nbsp;·&nbsp; x8 · $22.000</span>
+      <span class="precio-tira" id="ptBests">x4 · $12.500 &nbsp;·&nbsp; x8 · $22.000</span>
     </div>
     <div class="platos" id="gBests"></div>
-    <p class="aclara">Las imágenes de esta sección son ilustrativas del plato, generadas a partir de la descripción de la carta. Al contratar el sitio se reemplazan por fotos propias de cada roll.</p>
+    <p class="aclara" id="aclaraBests">Las imágenes de esta sección son ilustrativas del plato, generadas a partir de la descripción de la carta. Al contratar el sitio se reemplazan por fotos propias de cada roll.</p>
   </div>
 </section>
 
@@ -385,7 +385,7 @@
     <div class="sec-head">
       <h2 class="disp">Hugo <em>Rolls</em></h2>
       <p>Los clásicos de siempre, con salmón fresco y palta. Rolls sin corte si los preferís así.</p>
-      <span class="precio-tira">x4 · $10.000 &nbsp;·&nbsp; x8 · $19.000</span>
+      <span class="precio-tira" id="ptRolls">x4 · $10.000 &nbsp;·&nbsp; x8 · $19.000</span>
     </div>
     <div class="platos" id="gRolls"></div>
   </div>
@@ -420,6 +420,9 @@
     <div class="platos" id="gFrituras"></div>
   </div>
 </section>
+
+<!-- Secciones que el dueño crea desde su panel y que la carta no conoce. -->
+<div id="seccionesExtra"></div>
 
 <section style="background:var(--bg2);border-top:1px solid var(--line);">
   <div class="wrap rv">
@@ -583,7 +586,12 @@ const MUESTRA=VITRINAS.includes(location.hostname);
    texto de un roll son una promesa operativa, y había cinco que prometían algo
    distinto de lo que sale de la cocina. El detalle de cada una va en su línea.
    Las mismas correcciones están cargadas en la API, que es de donde las toma el
-   bot de WhatsApp. */
+   bot de WhatsApp.
+
+   Desde el 2026-10-16 esto es el RESPALDO: lo que se ve sale del server (ver
+   «la carta, como datos» más abajo) y estas listas solo se usan si el server no
+   contesta. Cambiar un texto acá no cambia lo que ve el cliente: se cambia
+   desde el panel del negocio. */
 const BESTS=[
  {id:'beetroot',n:'Beetroot',img:'beetroot',d:'Relleno de langostinos apanados y palta. Cubierta de remolacha, mayo acevichada, verdeo y togarashi.'},
  // Faltaba el relleno entero: la cubierta estaba bien descripta, el interior no se nombraba.
@@ -694,110 +702,176 @@ function pintarCarro(){
   document.querySelectorAll('.add').forEach(b=>b.classList.toggle('tiene',!!carro[b.dataset.k]));
 }
 
+/* ── la carta, como datos ──────────────────────────────────────────────────
+   Desde el 2026-10-16 la carta SALE DEL SERVER entera: nombre, descripción,
+   sección, foto, porciones con su precio, y lo que el dueño saca o vuelve a
+   poner en venta. Antes solo venían precios y disponibilidad y lo demás estaba
+   escrito acá, así que el dueño cambiaba algo en su panel y la página seguía
+   diciendo lo de antes (le pasó con «Salmón y Langostino» y con el Mixto).
+
+   Las listas de arriba quedan como RESPALDO: si el server no contesta, la
+   carta se arma con ellas y anda igual. Y aportan lo único que el server no
+   sabe: qué combinado va destacado.
+
+   Cada plato queda así: {id, n, d, sec, img, foto, dest, sin, vs:[{slug, et, p, sin}]}
+   — `img` es la foto que viene con el sitio (img/<img>.jpg), `foto` la que subió
+   el dueño desde el panel, que manda; `p` en pesos; `sin` = hoy no hay. */
+const API='https://api.hg-vl.com/v1/hugo';
+const API_ORIGEN=new URL(API).origin;
+const LOCAL=new Map([...BESTS,...ROLLS,...NIGIRIS,...FRITURAS,...COMBIS].map(x=>[x.id,x]));
+
+function porcionesLocales(x){
+  if(x.op) return x.op.map(([pz,pr])=>({slug:String(pz),et:pz+' '+(x.unidad||'piezas'),p:pr}));
+  if(x.p4) return [{slug:'4',et:'4 piezas',p:x.p4},{slug:'8',et:'8 piezas',p:x.p8}];
+  if(x.p3) return [{slug:'3',et:'3 piezas',p:x.p3},{slug:'6',et:'6 piezas',p:x.p6}];
+  return [{slug:'u',et:'porción',p:x.p}];
+}
+const CARTA_LOCAL=[...LOCAL.values()].map(x=>({id:x.id,n:x.n,d:x.d,sec:x.sec||'Combinados',
+  img:x.img||null,foto:null,dest:!!x.dest,sin:false,vs:porcionesLocales(x)}));
+let CARTA=CARTA_LOCAL;
+
+function desdeServer(items){
+  return items.map(i=>{
+    const loc=LOCAL.get(i.slug)||{};
+    return {id:i.slug, n:i.nombre, d:i.descripcion==null?(loc.d||''):i.descripcion,
+      sec:i.seccion||loc.sec||'Más de la carta',
+      img:i.imagen||loc.img||null,
+      foto:i.foto?(i.foto.startsWith('/')?API_ORIGEN+i.foto:i.foto):null,
+      dest:!!loc.dest, sin:i.disponible===false,
+      vs:i.variantes.map(v=>({slug:v.slug,et:v.etiqueta,p:v.precio/100,sin:v.alcanza===false}))};   // el server guarda centavos
+  });
+}
+
 /* ── tarjetas ── */
+/* La clave del carrito es la que entiende el server: `item|variante`, o el
+   ítem solo cuando la única porción es la `u`. Es la misma de siempre, así que
+   un carrito que quedó guardado de antes sigue sirviendo. */
+const claveDe=(x,v)=>v.slug==='u'?x.id:x.id+'|'+v.slug;
+const piezas=et=>{const m=/^(\d+)\s*piezas?$/i.exec(et);return m?m[1]:null;};
+
+/* Lo que no hay hoy no se puede pedir: el botón queda apagado y lo DICE en
+   pantalla, no en un `title` —en un teléfono no hay hover—, porque un botón
+   gris sin explicación parece una carta rota. */
+function boton(x,v,unica){
+  const pz=piezas(v.et), sin=x.sin||v.sin;
+  const rot=unica?'agregar':(pz?'x'+pz+' piezas':v.et);
+  const nom=unica?x.n:x.n+' ('+(pz?'x'+pz:v.et)+')';
+  return `<button class="add" data-k="${esc(claveDe(x,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${sin?' disabled title="Hoy no hay"':''}><b>${esc(rot)}</b><span class="num">${sin?'hoy no hay':fmt(v.p)}</span></button>`;
+}
+
 /* `conFoto` = la sección tiene al menos un plato con imagen. Si lo tiene, los
    que no la tienen llevan un marcador del mismo alto (si no, la tarjeta se
    estira para igualar a las vecinas y queda un hueco). Si la sección entera va
    sin fotos, no se dibuja el área de imagen en ninguna. */
 function tarjeta(x,_i,arr){
-  const conFoto=arr.some(y=>y.img);
-  const foto=x.img
-    ? `<div class="plato-img"><img src="img/${x.img}.jpg" alt="${esc(x.n)}" loading="lazy"></div>`
+  const conFoto=arr.some(y=>y.foto||y.img);
+  const src=x.foto||(x.img?'img/'+x.img+'.jpg':'');
+  const foto=src
+    ? `<div class="plato-img"><img src="${esc(src)}" alt="${esc(x.n)}" loading="lazy" onerror="this.parentNode.classList.add('sinfoto');this.outerHTML='<span>鮨</span>'"></div>`
     : (conFoto?'<div class="plato-img sinfoto"><span>鮨</span></div>':'');
-  let botones='';
-  if(x.p4) botones=`
-    <button class="add" data-k="${x.id}|4" data-n="${esc(x.n)} (x4)" data-p="${x.p4}" data-d="4 piezas"><b>x4 piezas</b><span class="num">${fmt(x.p4)}</span></button>
-    <button class="add" data-k="${x.id}|8" data-n="${esc(x.n)} (x8)" data-p="${x.p8}" data-d="8 piezas"><b>x8 piezas</b><span class="num">${fmt(x.p8)}</span></button>`;
-  else if(x.p3) botones=`
-    <button class="add" data-k="${x.id}|3" data-n="${esc(x.n)} (x3)" data-p="${x.p3}" data-d="3 piezas"><b>x3 piezas</b><span class="num">${fmt(x.p3)}</span></button>
-    <button class="add" data-k="${x.id}|6" data-n="${esc(x.n)} (x6)" data-p="${x.p6}" data-d="6 piezas"><b>x6 piezas</b><span class="num">${fmt(x.p6)}</span></button>`;
-  else botones=`
-    <button class="add" data-k="${x.id}" data-n="${esc(x.n)}" data-p="${x.p}" data-d="unidad"><b>agregar</b><span class="num">${fmt(x.p)}</span></button>`;
+  const unica=x.vs.length===1;
   return `<article class="plato">${foto}
     <div class="plato-body"><h3>${esc(x.n)}</h3><p>${esc(x.d)}</p>
-      <div class="add-row">${botones}</div></div></article>`;
+      <div class="add-row">${x.vs.map(v=>boton(x,v,unica)).join('')}</div></div></article>`;
 }
 function pintarGrilla(cont,lista){
   $(cont).innerHTML=lista.map(tarjeta).join('');
 }
 function combi(c){
+  const unica=c.vs.length===1;
   return `<div class="combi${c.dest?' dest':''}">
     <h3 class="disp">${esc(c.n)}</h3><p>${esc(c.d)}</p>
-    ${c.op.map(([pz,pr])=>`
+    ${c.vs.map(v=>{
+      const pz=piezas(v.et), sin=c.sin||v.sin;
+      const nom=unica?c.n:c.n+(pz?' '+pz+' pz':' ('+v.et+')');
+      return `
       <div class="combi-row">
-        <b>${c.unidad?esc(c.unidad):pz+' piezas'}</b>
-        <span class="p num">${fmt(pr)}</span>
-        <button class="mini add" data-k="${c.id}|${pz}" data-n="${esc(c.n)}${c.unidad?'':' '+pz+' pz'}" data-p="${pr}" data-d="${c.unidad?esc(c.unidad):pz+' piezas'}">Agregar</button>
-      </div>`).join('')}
-    ${c.id==='omakase'?'<p class="nota">Sugerido por la casa.</p>':''}
+        <b>${esc(v.et)}</b>
+        <span class="p num">${sin?'hoy no hay':fmt(v.p)}</span>
+        <button class="mini add" data-k="${esc(claveDe(c,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${sin?' disabled title="Hoy no hay"':''}>Agregar</button>
+      </div>`;}).join('')}
+    ${c.dest?'<p class="nota">Sugerido por la casa.</p>':''}
   </div>`;
 }
 
 /* ── enlace con el backend propio ─────────────────────────────────────────
-   Los precios y la disponibilidad pueden venir del server, para que Hugo los
-   cambie sin que nadie republique el sitio.
-
    Regla que manda acá: SI EL SERVER NO CONTESTA, LA CARTA FUNCIONA IGUAL con
-   los precios que ya tiene adentro. Una demo que muestra un error es peor que
-   una que anda sola, y esta carta también es la herramienta de venta. */
-const API='https://api.hg-vl.com/v1/hugo';
-const TODOS=[...BESTS,...ROLLS,...NIGIRIS,...FRITURAS];
-
+   la que ya tiene adentro. Una demo que muestra un error es peor que una que
+   anda sola, y esta carta también es la herramienta de venta. Un server que
+   contesta con la carta vacía se toma como que no contestó: sacar todo de
+   venta de golpe es mucho más probable que sea una falla que una decisión. */
 async function sincronizar(){
   try{
     const r=await fetch(API+'/catalogo',{signal:AbortSignal.timeout(6000)});
     if(!r.ok) return false;
     const {items}=await r.json();
-    const porSlug=new Map(items.map(i=>[i.slug,i]));
-    const aplicar=x=>{
-      const i=porSlug.get(x.id); if(!i) return;
-      x.sinStock = i.disponible===false;
-      for(const v of i.variantes){
-        const pesos=v.precio/100;                    // el server guarda centavos
-        if(x.op){ const f=x.op.find(o=>String(o[0])===v.slug); if(f) f[1]=pesos; }
-        else if(v.slug==='u') x.p=pesos;
-        else x['p'+v.slug]=pesos;
-        if(v.alcanza===false){ (x.agotadas=x.agotadas||new Set()).add(v.slug); }
-      }
-    };
-    TODOS.forEach(aplicar); COMBIS.forEach(aplicar);
+    if(!Array.isArray(items)||!items.length) return false;
+    CARTA=desdeServer(items);
+    podarCarro();
     return true;
   }catch(e){ return false; }
 }
 
-/* Lo que no hay hoy no se puede pedir: el botón queda apagado y lo DICE en
-   pantalla. Antes el motivo vivía solo en el `title`, que en un teléfono no
-   existe —no hay hover—, así que el cliente veía un botón gris sin explicación
-   y creía que la carta estaba rota. Esta carta se mira desde el teléfono. */
-function marcarAgotados(){
-  const todos=[...TODOS,...COMBIS];
-  document.querySelectorAll('.add').forEach(b=>{
-    const [id,va]=b.dataset.k.split('|');
-    const x=todos.find(y=>y.id===id); if(!x) return;
-    const sin = x.sinStock || (x.agotadas && x.agotadas.has(va||'u'));
-    b.disabled=!!sin;
-    b.title = sin ? 'Hoy no hay' : '';
-    // El precio se reemplaza por el motivo y se guarda para poder volver: el
-    // stock se repone en el medio del servicio y el repintado no recarga.
-    // Las tarjetas llevan el precio en un <span> adentro del botón; los
-    // combinados lo llevan al lado y el botón solo dice "Agregar". Se escribe
-    // donde haya lugar, que no es el mismo en los dos.
-    const et=b.querySelector('span')||b;
-    if(sin){ if(!et.dataset.textoPrevio) et.dataset.textoPrevio=et.textContent; et.textContent='hoy no hay'; }
-    else if(et.dataset.textoPrevio){ et.textContent=et.dataset.textoPrevio; delete et.dataset.textoPrevio; }
-  });
+/* El carrito se guarda en el teléfono con nombre y precio del momento en que
+   se eligió. Con la carta del server a la vista se pone al día: lo que salió
+   de venta se va (el server rechazaría el pedido entero por eso) y lo demás
+   toma el precio y el nombre de hoy, que es lo que el server va a cobrar. */
+function podarCarro(){
+  const vivas=new Map();
+  for(const x of CARTA) for(const v of x.vs) vivas.set(claveDe(x,v),{x,v});
+  let cambio=false;
+  for(const k of Object.keys(carro)){
+    const h=vivas.get(k);
+    if(!h){ delete carro[k]; cambio=true; continue; }
+    if(carro[k].p!==h.v.p){ carro[k].p=h.v.p; cambio=true; }
+  }
+  if(cambio) localStorage.setItem('hugo_carro',JSON.stringify(carro));
+}
+
+/* Qué grilla le toca a cada sección del server. Una sección que el dueño
+   inventa desde su panel no tiene lugar fijo: se arma al final, con su nombre. */
+const CONTENEDOR={'Hugo Bests':'gBests','Hugo Rolls':'gRolls','Nigiris':'gNigiris',
+  'Combinados':'gCombis','Frituras':'gFrituras','Hot-rolls':'gFrituras'};
+
+/* «x4 · $12.500 · x8 · $22.000» bajo el título, solo si TODA la sección cuesta
+   lo mismo. Si el dueño le cambia el precio a un roll, la tira desaparece en
+   vez de mentir sobre los otros. */
+function tiraPrecios(id,lista){
+  const el=$(id); if(!el) return;
+  const firma=x=>x.vs.map(v=>v.et+'='+v.p).join(';');
+  const igual=lista&&lista.length&&lista.every(x=>firma(x)===firma(lista[0]));
+  el.hidden=!igual;
+  if(igual) el.innerHTML=lista[0].vs.map(v=>{const pz=piezas(v.et);return (pz?'x'+pz:esc(v.et))+' · '+fmt(v.p);}).join(' &nbsp;·&nbsp; ');
 }
 
 function pintarTodo(){
-  pintarGrilla('gBests',BESTS);
-  pintarGrilla('gRolls',ROLLS);
-  pintarGrilla('gNigiris',NIGIRIS);
-  pintarGrilla('gFrituras',FRITURAS);
-  $('gCombis').innerHTML=COMBIS.map(combi).join('');
+  const grupos=new Map(), extra=new Map();
+  for(const x of CARTA){
+    const c=CONTENEDOR[x.sec], m=c?grupos:extra, k=c||x.sec;
+    if(!m.has(k)) m.set(k,[]);
+    m.get(k).push(x);
+  }
+  for(const id of ['gBests','gRolls','gNigiris','gFrituras']){
+    const l=grupos.get(id)||[];
+    pintarGrilla(id,l);
+    $(id).closest('section').hidden=!l.length;
+  }
+  const cs=grupos.get('gCombis')||[];
+  $('gCombis').innerHTML=cs.map(combi).join('');
+  $('gCombis').closest('section').hidden=!cs.length;
+  $('seccionesExtra').innerHTML=[...extra].map(([nombre,l])=>`
+    <section><div class="wrap">
+      <div class="sec-head"><h2 class="disp">${esc(nombre)}</h2></div>
+      <div class="platos">${l.map(tarjeta).join('')}</div>
+    </div></section>`).join('');
+  tiraPrecios('ptBests',grupos.get('gBests'));
+  tiraPrecios('ptRolls',grupos.get('gRolls'));
+  // El aviso de «imágenes ilustrativas» vale mientras quede alguna generada:
+  // cuando el dueño sube las suyas, deja de ser cierto.
+  $('aclaraBests').hidden=!(grupos.get('gBests')||[]).some(x=>x.img&&!x.foto);
   document.querySelectorAll('.add').forEach(b=>{
     b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d));
   });
-  marcarAgotados();
   pintarCarro();
   /* La grilla se acaba de reescribir entera. Lo que colgaba de las tarjetas
      viejas —el domo de los Hugo Bests— se fue con el innerHTML y hay que
@@ -1493,7 +1567,12 @@ void main(){
     document.querySelectorAll('#gBests .plato-img').forEach(cont=>{
       const img=cont.querySelector('img');
       if(!img) return;
-      const slug=(img.getAttribute('src')||'').replace('img/','').replace('.jpg','');
+      /* Solo las fotos que vienen con el sitio: la que sube el dueño vive en
+         otro origen y WebGL no puede leerla sin permiso de CORS. Esa se ve
+         plana, que es mejor que rota. */
+      const src=img.getAttribute('src')||'';
+      if(!src.startsWith('img/')) return;
+      const slug=src.replace('img/','').replace('.jpg','');
       if(!slug) return;
       iniciarTarjeta(cont, slug);
     });
