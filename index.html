@@ -237,6 +237,7 @@
   .cuando-tab{border:0;background:transparent;color:var(--dim);font:inherit;font-size:13px;
     padding:8px 6px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s;}
   .cuando-tab.on{background:var(--acento,#e44027);color:#fff;}
+  .cuando-tab small{font-size:11.5px;opacity:.8;margin-left:3px;white-space:nowrap;}
   .cuando-sel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .cuando-sel select{width:100%;padding:9px 10px;border-radius:8px;font:inherit;font-size:14px;
     background:rgba(255,255,255,.06);color:var(--txt,#fff);border:1px solid var(--line);}
@@ -295,6 +296,7 @@
   .copiar:hover{border-color:var(--acento,#e44027);color:var(--txt,#fff);}
   .total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
   .total-row b{font-size:22px;font-weight:700;}
+  .total-row.sub{margin-bottom:2px;font-size:13px;color:var(--dim);}
   .desc-nota{font-size:12px;color:var(--oro);margin-bottom:14px;}
   .panel-pie .btn{width:100%;text-align:center;padding:14px;font-size:15px;}
   .vacio-c{text-align:center;padding:40px 20px;color:var(--mute);font-size:14px;}
@@ -500,8 +502,8 @@
       <div class="campo">
         <span class="campo-t">¿Cómo lo querés?</span>
         <div class="cuando-tabs">
-          <button type="button" class="cuando-tab on" data-entrega="retiro">Lo retiro</button>
-          <button type="button" class="cuando-tab" data-entrega="envio">Delivery</button>
+          <button type="button" class="cuando-tab" data-entrega="retiro">Lo retiro</button>
+          <button type="button" class="cuando-tab" data-entrega="envio">Delivery <small id="envTab"></small></button>
         </div>
       </div>
       <label class="campo"><span class="campo-t">Tu nombre</span>
@@ -543,6 +545,7 @@
         <button class="link-wa" id="pWa">o pedilo por WhatsApp</button>
       </div>
       <div id="pieDatos" hidden>
+        <div class="total-row sub" id="envRow" hidden><span>Envío</span><span class="num" id="envMonto"></span></div>
         <div class="total-row"><span>Total</span><b class="num" id="pTotal2">$ 0</b></div>
         <p class="desc-nota" id="dtoNota" hidden></p>
         <p class="dto-ok" id="dtoOk" hidden></p>
@@ -559,6 +562,11 @@
 <script>
 'use strict';
 const WA='5492901300080';
+/* El delivery, en pesos (2026-10-20, lo pidió Hugo). La API todavía no sabe
+   de envíos —el total del pedido son solo los platos—, así que lo suma la
+   página donde lo ve el cliente (pantalla y mensaje) y la comanda lo lleva
+   escrito en la nota. Si cambia, se cambia acá. */
+const ENVIO=4000;
 
 /* ── MUESTRA: en la vitrina el pedido no se manda ────────────────────────────
    Este archivo se sirve en DOS dominios: `hugosushi.online`, que es el sitio de
@@ -955,9 +963,12 @@ function elegido(){
     : `También podés encargarlo para más adelante, hasta ${AGENDA.dias} día${AGENDA.dias>1?'s':''} antes.`;
 }
 
+/* Solo las pestañas de «para cuándo»: las de retiro/delivery comparten la
+   clase, y antes tocar «Delivery» pasaba por acá y borraba el día y la hora
+   que el cliente ya había elegido para el encargue. */
 document.addEventListener('click', ev=>{
-  const t=ev.target.closest('.cuando-tab'); if(!t) return;
-  document.querySelectorAll('.cuando-tab').forEach(b=>b.classList.toggle('on', b===t));
+  const t=ev.target.closest('[data-cuando]'); if(!t) return;
+  document.querySelectorAll('[data-cuando]').forEach(b=>b.classList.toggle('on', b===t));
   $('cuandoSel').hidden = t.dataset.cuando!=='luego';
   elegido();
 });
@@ -985,7 +996,11 @@ function mensaje(pedido){
   /* El total sale del PEDIDO si lo tiene. Leerlo del carrito funcionaba cuando
      el mensaje se armaba con el carrito todavía lleno; desde la pantalla de
      confirmación el carrito ya se vació, y el cliente veía «Total: $ 0». */
-  const total = (pedido && pedido.total != null) ? fmt(pedido.total/100) : fmt(totalCarro());
+  /* El envío va como una línea más y dentro del total: el server no lo suma
+     (ver ENVIO), así que el total del server es solo lo de la cocina. */
+  const env = envio();
+  const lineaEnvio = env ? `\n• Envío — ${fmt(env)}` : '';
+  const total = fmt(((pedido && pedido.total != null) ? pedido.total/100 : totalCarro()) + env);
   const ref = pedido && pedido.codigo ? `\n\nPedido N° ${pedido.codigo}` : '';
   /* Si es un encargue, el mensaje lo dice ARRIBA y no pregunta por la demora:
      preguntar «¿para cuándo?» sobre un pedido que ya tiene día y hora es la
@@ -1005,10 +1020,23 @@ function mensaje(pedido){
     const pago = pedido.pago === 'transferencia'
       ? '\n\nLo pago por transferencia, te mando el comprobante.'
       : pedido.pago === 'online' ? '\n\nLo pago online.' : '';
-    return `¡Hola Hugo! Hice este pedido desde la página:\n\n${li}\n\nTotal: ${total}${cuando}${ref}${pago}`;
+    return `¡Hola Hugo! Hice este pedido desde la página:\n\n${li}${lineaEnvio}\n\nTotal: ${total}${quien(false)}${cuando}${ref}${pago}`;
   }
   const cierre = frase ? '\n\n¿Me lo confirman?' : '\n\n¿Me confirman disponibilidad y demora?';
-  return `¡Hola Hugo! Quiero hacer este pedido:\n\n${li}\n\nTotal: ${total}${cuando}${ref}${cierre}`;
+  return `¡Hola Hugo! Quiero hacer este pedido:\n\n${li}${lineaEnvio}\n\nTotal: ${total}${quien(true)}${cuando}${ref}${cierre}`;
+}
+
+/* Lo que Hugo necesita para cumplirlo sin repreguntar: si lo retiran o adónde
+   llevarlo, y a quién avisarle. Antes el pedido por WhatsApp salía sin nada de
+   esto y había que sacarlo hablando. El pago solo cuando el mensaje no lo dice
+   ya en su cierre (el del pedido tomado lo dice). */
+function quien(conPago){
+  if(!DATOS.nombre) return '';
+  const l=[DATOS.entrega==='envio' ? `Delivery a: ${DATOS.dir}` : 'Lo retiro por el local.',
+    `Nombre: ${DATOS.nombre}`, `Teléfono: ${DATOS.tel}`];
+  if(DATOS.nota) l.push(`Aclaraciones: ${DATOS.nota}`);
+  if(conPago && DATOS.pago) l.push(`Pago: ${(PAGO_TXT[DATOS.pago]||[0,DATOS.pago])[1].toLowerCase()}`);
+  return '\n\n'+l.join('\n');
 }
 
 /* Clave de idempotencia atada al contenido del carrito: dos toques al botón
@@ -1027,12 +1055,15 @@ async function registrar(conDatos){
     const [item,variante]=k.split('|');
     return {item, variante: variante||'u', cantidad: carro[k].q};
   });
-  /* Los datos del cliente solo viajan cuando los cargó: el pedido por WhatsApp
-     sigue entrando pelado, como siempre, y ahí los datos se arreglan hablando. */
+  /* Los datos del cliente viajan siempre que los cargó, y desde el 2026-10-20
+     los carga siempre: también el que manda por WhatsApp pasa antes por el
+     paso de datos. El envío va escrito en la nota porque el total del server
+     no lo incluye y el que arma la comanda tiene que cobrarlo. */
+  const nota = [DATOS.nota, envio() ? `Cobrar envío: ${fmt(envio())}` : ''].filter(Boolean).join(' · ');
   const extra = conDatos ? {
     canal:'web', entrega:DATOS.entrega,
     cliente:{nombre:DATOS.nombre, telefono:DATOS.tel, ...(DATOS.dir?{direccion:DATOS.dir}:{})},
-    ...(DATOS.nota?{nota:DATOS.nota}:{}),
+    ...(nota?{nota}:{}),
     ...(DATOS.pago?{pago:DATOS.pago}:{}),
   } : {};
   try{
@@ -1054,7 +1085,21 @@ async function registrar(conDatos){
    Tres pasos: el carrito, quién sos y cómo pagás, y qué pasa ahora. WhatsApp
    deja de ser el único camino y pasa a ser uno más, a un toque en los dos
    primeros pasos. */
-const DATOS={entrega:'retiro',nombre:'',tel:'',dir:'',nota:'',pago:''};
+/* La entrega arranca SIN elegir (2026-10-20): con «Lo retiro» marcado de
+   entrada, el que quería delivery y no lo tocaba mandaba «lo retiro». Hugo
+   pidió que el cliente lo aclare, y aclarar es elegir. */
+const DATOS={entrega:'',nombre:'',tel:'',dir:'',nota:'',pago:''};
+const envio=()=>DATOS.entrega==='envio'?ENVIO:0;
+$('envTab').textContent='+ '+fmt(ENVIO);
+
+/* Por dónde lo quiere mandar: lo dice el botón que lo trajo. Los dos caminos
+   pasan por los datos; lo que cambia es cuál queda como botón grande, para que
+   el que tocó «Pedir por WhatsApp» no se encuentre con otra cosa. */
+let VIA='web';
+function rotular(){
+  $('pConfirmar').textContent = VIA==='wa' ? 'Mandar el pedido por WhatsApp' : 'Confirmar el pedido';
+  $('pWa2').textContent = VIA==='wa' ? 'o confirmalo acá, sin WhatsApp' : 'o mandalo por WhatsApp';
+}
 
 /* Las formas de pago las dice el SERVER, no esta página: un botón de
    transferencia sin alias cargado manda al cliente a transferirle a la nada. */
@@ -1122,16 +1167,18 @@ function verPaso(p){
   $('pCerrar').hidden  = false;
   $('pTitulo').textContent = p==='carrito'?'Tu pedido':p==='datos'?'Últimos datos':'¡Listo!';
   $('panel').querySelector('.panel-box').scrollTop=0;
-  if(p==='datos'){ pintarPagos(); pintarTotal2(); }
+  if(p==='datos'){ pintarPagos(); pintarTotal2(); rotular(); }
 }
 
 /* El total tachado y el nuevo al lado. Un total que cambia solo, sin decir por
    qué, parece un error de la página. */
 function pintarTotal2(){
-  const t=$('pTotal2');
+  const t=$('pTotal2'), env=envio();
   t.innerHTML = llevaDto()
     ? `<s>${fmt(totalCarro())}</s> ${fmt(totalConDto())}`
-    : fmt(totalCarro());
+    : fmt(totalCarro()+env);
+  $('envRow').hidden = !env;
+  $('envMonto').textContent = fmt(env);
   $('dtoNota').hidden = !dtoEfec() || llevaDto();
   $('dtoNota').textContent = dtoEfec()
     ? `Retirando y pagando en efectivo te hacemos ${dtoEfec()}%.` : '';
@@ -1139,9 +1186,10 @@ function pintarTotal2(){
   $('dtoOk').textContent = llevaDto() ? `Te descontamos ${dtoEfec()}% por retirarlo y pagarlo en efectivo.` : '';
 }
 
-function irADatos(){
+function irADatos(via){
   if(piezasCarro()===0) return;
-  verPaso('datos');
+  VIA = via==='wa' ? 'wa' : 'web';
+  verPaso('datos'); abrir();
   setTimeout(()=>{ const n=$('fNombre'); if(n&&!n.value) n.focus(); },80);
 }
 
@@ -1155,6 +1203,7 @@ function validar(){
   DATOS.tel=$('fTel').value.trim();
   DATOS.dir=$('fDir').value.trim();
   DATOS.nota=$('fNota').value.trim();
+  if(!DATOS.entrega) return err('Elegí si lo retirás por el local o te lo llevamos.');
   if(DATOS.nombre.length<2){ $('fNombre').classList.add('mal'); $('fNombre').focus(); return err('Decinos cómo te llamás.'); }
   if(DATOS.tel.replace(/\D/g,'').length<8){ $('fTel').classList.add('mal'); $('fTel').focus(); return err('Dejanos un teléfono para avisarte cuando esté.'); }
   if(DATOS.entrega==='envio'&&DATOS.dir.length<5){ $('fDir').classList.add('mal'); $('fDir').focus(); return err('Para el delivery necesitamos la dirección.'); }
@@ -1162,10 +1211,10 @@ function validar(){
   return true;
 }
 
-async function confirmar(){
+async function confirmar(b){
   if(MUESTRA) return;            // en la vitrina el botón está apagado; esto es el cinturón
   if(!validar()) return;
-  const b=$('pConfirmar'); b.disabled=true; b.textContent='Tomando el pedido…';
+  b=b||$('pConfirmar'); b.disabled=true; b.textContent='Tomando el pedido…';
   /* El total del carrito ANTES de mandarlo: un pedido que el server reconoce
      como repetido vuelve solo con el código, y sin esto la pantalla de
      transferencia le pide al cliente que gire un importe en blanco. */
@@ -1174,7 +1223,7 @@ async function confirmar(){
      sin detalle y para entonces el carrito ya no está. */
   const lineasLocal=Object.values(carro).map(i=>({cantidad:i.q,nombre:i.n,etiqueta:'',precio:i.p*100}));
   const r=await registrar(true);
-  b.disabled=false; b.textContent='Confirmar el pedido';
+  b.disabled=false; rotular();
   if(r.error){ $('fErr').textContent=r.error; return; }
   PEDIDO={total:totalLocal, lineas:lineasLocal, pago:DATOS.pago, ...r, __web:true};
   /* El orden importa: primero se pasa a la confirmación y RECIÉN AHÍ se vacía
@@ -1190,7 +1239,9 @@ async function confirmar(){
    cliente va a tener que decir si algo sale mal. */
 function pintarListo(){
   const p=PEDIDO||{}, pago=p.pago||DATOS.pago;
-  const tot=p.total!=null?fmt(p.total/100):'';
+  /* Lo que se paga es la cocina (el total del server) más el envío. */
+  const env=envio(), conEnv=env?` (incluye ${fmt(env)} de envío)`:'';
+  const tot=p.total!=null?fmt(p.total/100+env):'';
   const frase=frasePara(p.para||PARA);
   const cuando=frase?`Lo tenés ${frase}.`:'Te avisamos por WhatsApp cuando esté.';
   const t=COBRO&&COBRO.transferencia;
@@ -1202,14 +1253,17 @@ function pintarListo(){
       ${fila('Alias',t.alias)}${fila('CBU',t.cbu)}
       ${t.titular?`<div class="cbrow"><span>Titular</span><b>${esc(t.titular)}</b></div>`:''}
       ${t.banco?`<div class="cbrow"><span>Banco</span><b>${esc(t.banco)}</b></div>`:''}
-      <div class="cbrow"><span>Importe</span><b>${tot}</b></div>
+      <div class="cbrow"><span>Importe${env?' con envío':''}</span><b>${tot}</b></div>
     </div>
     ${t.nota?`<p class="cuando-nota">${esc(t.nota)}</p>`:''}
     <button class="btn" id="pTransferi">Ya transferí</button>`;
   }else if(pago==='online'){
-    medio=`<button class="btn" id="pPagar">Pagar ${tot} ahora</button>`;
+    /* El cobro online lo arma el server con SU total, que no trae el envío:
+       el botón dice lo que se va a cobrar y el envío se aclara aparte. */
+    medio=`<button class="btn" id="pPagar">Pagar ${p.total!=null?fmt(p.total/100):''} ahora</button>
+      ${env?`<p class="cuando-nota">El envío (${fmt(env)}) lo pagás al recibirlo.</p>`:''}`;
   }else{
-    medio=`<p class="cuando-nota">Pagás ${tot} en efectivo cuando ${DATOS.entrega==='envio'?'te lo llevamos':'lo retirás'}.</p>`;
+    medio=`<p class="cuando-nota">Pagás ${tot} en efectivo cuando ${DATOS.entrega==='envio'?'te lo llevamos':'lo retirás'}${conEnv}.</p>`;
   }
   $('pListo').innerHTML=`<p class="cod">Tu número de pedido<b>${esc(p.codigo||'')}</b></p>
     <p class="cuando-nota" style="text-align:center">${esc(cuando)}</p>${medio}`;
@@ -1256,6 +1310,7 @@ document.addEventListener('click', ev=>{
   if(t){
     document.querySelectorAll('[data-entrega]').forEach(b=>b.classList.toggle('on',b===t));
     DATOS.entrega=t.dataset.entrega;
+    $('fErr').textContent='';
     $('fDirBox').hidden=DATOS.entrega!=='envio';
     pintarPagos(); pintarTotal2();
     return;
@@ -1270,13 +1325,18 @@ document.addEventListener('click', ev=>{
 
 traerCobro();
 
-function irAWhatsapp(){
-  if(piezasCarro()===0) return;
+/* El pedido por WhatsApp pide los mismos datos que el de la página (antes
+   salía sin nada: 10 de los 15 pedidos de septiembre-octubre llegaron sin
+   nombre ni teléfono) y se registra igual, con código, para que Hugo lo tenga
+   en el panel aunque el cliente no llegue a apretar «enviar». */
+function porWhatsapp(){
+  if(MUESTRA||piezasCarro()===0) return;
+  if(!validar()) return;
   // La ventana se abre YA, dentro del click: si se abriera después del await,
   // el navegador la trataría como emergente y la bloquearía.
   const win=window.open('','_blank');
   if(win){ win.opener=null; win.document.write('<p style="font:16px system-ui;padding:24px">Preparando tu pedido…</p>'); }
-  registrar().then(pedido=>{
+  registrar(true).then(pedido=>{
     const url='https://wa.me/'+WA+'?text='+encodeURIComponent(mensaje(pedido));
     if(win) win.location.replace(url); else window.location.href=url;
   });
@@ -1285,9 +1345,9 @@ function irAWhatsapp(){
    pero ya no es el único. Desde la confirmación manda el pedido YA TOMADO, con
    su código, así que la conversación arranca sabiendo de qué se habla. */
 if(!MUESTRA){
-  $('bWa').onclick=irAWhatsapp;
-  $('pWa').onclick=irAWhatsapp;
-  $('pWa2').onclick=irAWhatsapp;
+  $('bWa').onclick=()=>irADatos('wa');
+  $('pWa').onclick=()=>irADatos('wa');
+  $('pWa2').onclick=e=>VIA==='wa'?confirmar(e.currentTarget):porWhatsapp();
 }else{
   /* Se esconden los tres caminos de envío y se dice por qué, en los dos pies
      del panel. `pConfirmar` queda a la vista pero apagado: sacarlo escondería
@@ -1299,8 +1359,8 @@ if(!MUESTRA){
   $('pieCarrito').insertAdjacentHTML('beforeend',nota);
   $('pieDatos').insertAdjacentHTML('beforeend',nota);
 }
-$('pSeguir').onclick=irADatos;
-$('pConfirmar').onclick=confirmar;
+$('pSeguir').onclick=()=>irADatos('web');
+$('pConfirmar').onclick=e=>VIA==='wa'?porWhatsapp():confirmar(e.currentTarget);
 $('pVolver').onclick=()=>verPaso('carrito');
 const abrir=()=>{ $('panel').classList.add('on'); document.body.classList.add('pidiendo'); };
 $('bVer').onclick=()=>{ if(PASO==='listo') verPaso('carrito'); abrir(); };
@@ -1588,6 +1648,6 @@ void main(){
   requestAnimationFrame(cuadro);
 })();
 </script>
-<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Rolls (los clásicos), Hugo Bests (los de autor), nigiris, combinados y frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
+<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Rolls (los clásicos), Hugo Bests (los de autor), nigiris, combinados y frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Se retira por el local o va por delivery, que cuesta $4.000 de envío; al armar el pedido la página pregunta cuál y pide nombre, teléfono y, si es delivery, la dirección. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
 <script src="chat-ia.js" defer></script>
 </body></html>
