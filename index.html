@@ -159,13 +159,17 @@
   /* El apagado no se lee como "roto": se lee como "hoy no". */
   .add:disabled span{font-size:11px;letter-spacing:.04em;color:var(--mute);text-transform:lowercase}
   .add:disabled:hover{border-color:var(--line);background:transparent}
-  .add-row{display:flex;gap:8px;margin-top:auto;padding-top:12px;}
-  .add{flex:1;background:transparent;border:1px solid var(--line);color:var(--ink);font-family:inherit;
-    font-size:12.5px;font-weight:500;padding:9px 6px;border-radius:9px;cursor:pointer;
-    transition:all .18s;display:flex;flex-direction:column;gap:1px;align-items:center;}
+  /* Grilla y no una fila: con la escala por cantidad un roll llega a 7
+     porciones (x4 a x32), y en una fila las últimas quedaban cortadas por el
+     overflow de la tarjeta, sin forma de pedirlas. `auto-fit` hace que dos
+     porciones sigan ocupando todo el ancho, como antes. */
+  .add-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));gap:6px;margin-top:auto;padding-top:12px;}
+  .add{min-width:0;background:transparent;border:1px solid var(--line);color:var(--ink);font-family:inherit;
+    font-size:12.5px;font-weight:500;padding:9px 4px;border-radius:9px;cursor:pointer;
+    transition:all .18s;display:flex;flex-direction:column;gap:1px;align-items:center;justify-content:flex-end;}
   .add:hover{border-color:var(--rojo);background:rgba(228,64,39,.12);}
   .add b{font-weight:600;font-size:11px;letter-spacing:.06em;color:var(--mute);}
-  .add span{font-weight:600;font-size:13.5px;}
+  .add span{font-weight:600;font-size:13.5px;white-space:nowrap;}
   .add.tiene{border-color:var(--rojo);background:rgba(228,64,39,.18);}
 
   /* ── COMBINADOS ── */
@@ -334,13 +338,13 @@
   <div class="wrap nav-in">
     <a class="brand" href="#top"><img src="img/logo.jpg" alt="Hugo Sushi"></a>
     <div class="nav-links">
-      <a href="#bests">Hugo Bests</a>
       <a href="#rolls">Rolls</a>
+      <a href="#bests">Hugo Bests</a>
       <a href="#nigiris">Nigiris</a>
       <a href="#combinados">Combinados</a>
       <a href="#frituras">Frituras</a>
       <a href="inmersivo.html" style="color:var(--rojo-2)">✦ Inmersiva</a>
-      <a class="btn" href="#bests">Armar pedido</a>
+      <a class="btn" href="#rolls">Armar pedido</a>
     </div>
   </div>
 </nav>
@@ -352,7 +356,7 @@
       <h1>El sushi del <em>fin del mundo</em>.</h1>
       <p>Rolls, nigiris y combinados hechos el día. Elegí lo que querés, armá tu pedido y te lo mandamos ya escrito por WhatsApp — sin capturas ni idas y vueltas.</p>
       <div class="hero-ctas">
-        <a class="btn" href="#bests">Armar mi pedido</a>
+        <a class="btn" href="#rolls">Armar mi pedido</a>
         <a class="btn ghost" href="inmersivo.html">Experiencia inmersiva ✦</a>
       </div>
     </div>
@@ -368,26 +372,27 @@
   <div class="tira-in" id="tiraIn" aria-hidden="true"></div>
 </div>
 
-<section id="bests">
-  <div class="wrap rv">
-    <div class="sec-head">
-      <h2 class="disp">Hugo <em>Bests</em></h2>
-      <p>Los que nos hicieron famosos. Cada uno con su cubierta y su salsa — los que más se piden y los que más se sacan fotos.</p>
-      <span class="precio-tira" id="ptBests">x4 · $12.500 &nbsp;·&nbsp; x8 · $22.000</span>
-    </div>
-    <div class="platos" id="gBests"></div>
-    <p class="aclara" id="aclaraBests">Las imágenes de esta sección son ilustrativas del plato, generadas a partir de la descripción de la carta. Al contratar el sitio se reemplazan por fotos propias de cada roll.</p>
-  </div>
-</section>
-
-<section id="rolls" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+<!-- Rolls va primero y Bests segundo desde el 2026-10-20, a pedido del dueño. -->
+<section id="rolls">
   <div class="wrap rv">
     <div class="sec-head">
       <h2 class="disp">Hugo <em>Rolls</em></h2>
       <p>Los clásicos de siempre, con salmón fresco y palta. Rolls sin corte si los preferís así.</p>
-      <span class="precio-tira" id="ptRolls">x4 · $10.000 &nbsp;·&nbsp; x8 · $19.000</span>
+      <span class="precio-tira" id="ptRolls">x4 · $12.000 &nbsp;·&nbsp; x8 · $22.000</span>
     </div>
     <div class="platos" id="gRolls"></div>
+  </div>
+</section>
+
+<section id="bests" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Hugo <em>Bests</em></h2>
+      <p>Los que nos hicieron famosos. Cada uno con su cubierta y su salsa — los que más se piden y los que más se sacan fotos.</p>
+      <span class="precio-tira" id="ptBests">x4 · $14.000 &nbsp;·&nbsp; x8 · $25.000</span>
+    </div>
+    <div class="platos" id="gBests"></div>
+    <p class="aclara" id="aclaraBests">Las imágenes de esta sección son ilustrativas del plato, generadas a partir de la descripción de la carta. Al contratar el sitio se reemplazan por fotos propias de cada roll.</p>
   </div>
 </section>
 
@@ -602,7 +607,7 @@ const BESTS=[
  {id:'hawaismoke',n:'Hawai Smoke',img:'hawai-smoke',d:'Avocado, queso y mango. Cubierta de salmón flambeado con manteca ahumada.'},
  {id:'nikkeiroll',n:'Nikkei Roll',img:'nikkei-roll',d:'Relleno de langostinos y avocado. Cubierta de salmón, avocado y verdeo, con salsa nikkei.'},
  {id:'ebifurai',n:'Ebi Furai',img:'ebi-furai',d:'Langostinos apanados con salsa de mostaza y miel.'}
-].map(x=>({...x,p4:12500,p8:22000,sec:'Hugo Bests'}));
+].map(x=>({...x,p4:14000,p8:25000,sec:'Hugo Bests'}));
 
 const ROLLS=[
  {id:'philadelphia',n:'Philadelphia',d:'Salmón, queso y palta.',img:'philadelphia'},
@@ -615,7 +620,7 @@ const ROLLS=[
  {id:'acevichado',n:'Acevichado',d:'Langostinos, palta y nuestra mayonesa acevichada.',img:'acevichado'},
  {id:'california',n:'California',d:'Kanikama, mango y palta.',img:'california'},
  {id:'limaroll',n:'Lima Roll',d:'Batata, pepino, queso y ceviche.',img:'limaroll'}
-].map(x=>({...x,p4:10000,p8:19000,sec:'Hugo Rolls'}));
+].map(x=>({...x,p4:12000,p8:22000,sec:'Hugo Rolls'}));
 
 /* Su carta cruza las descripciones de langostino/ahumado (ver comentario del
    encabezado): se dejó el resto del texto y se quitó el sustantivo que no
@@ -1583,6 +1588,6 @@ void main(){
   requestAnimationFrame(cuadro);
 })();
 </script>
-<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Bests (x4 $12.500 / x8 $22.000), Hugo Rolls (x4 $10.000 / x8 $19.000), nigiris, combinados de 16 a 60 piezas y frituras. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
+<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Rolls (los clásicos), Hugo Bests (los de autor), nigiris, combinados y frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
 <script src="chat-ia.js" defer></script>
 </body></html>
