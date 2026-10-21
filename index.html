@@ -340,13 +340,13 @@
   <div class="wrap nav-in">
     <a class="brand" href="#top"><img src="img/logo.jpg" alt="Hugo Sushi"></a>
     <div class="nav-links">
+      <a href="#combinados">Combinados</a>
+      <a href="#frituras">Frituras</a>
       <a href="#rolls">Rolls</a>
       <a href="#bests">Hugo Bests</a>
       <a href="#nigiris">Nigiris</a>
-      <a href="#combinados">Combinados</a>
-      <a href="#frituras">Frituras</a>
       <a href="inmersivo.html" style="color:var(--rojo-2)">✦ Inmersiva</a>
-      <a class="btn" href="#rolls">Armar pedido</a>
+      <a class="btn" href="#combinados">Armar pedido</a>
     </div>
   </div>
 </nav>
@@ -358,7 +358,7 @@
       <h1>El sushi del <em>fin del mundo</em>.</h1>
       <p>Rolls, nigiris y combinados hechos el día. Elegí lo que querés, armá tu pedido y te lo mandamos ya escrito por WhatsApp — sin capturas ni idas y vueltas.</p>
       <div class="hero-ctas">
-        <a class="btn" href="#rolls">Armar mi pedido</a>
+        <a class="btn" href="#combinados">Armar mi pedido</a>
         <a class="btn ghost" href="inmersivo.html">Experiencia inmersiva ✦</a>
       </div>
     </div>
@@ -374,7 +374,29 @@
   <div class="tira-in" id="tiraIn" aria-hidden="true"></div>
 </div>
 
-<!-- Rolls va primero y Bests segundo desde el 2026-10-20, a pedido del dueño. -->
+<!-- Orden de la carta (2026-10-20, a pedido del dueño): primero Combinados y
+     Frituras, que es lo que más se quiere vender; después Rolls, Bests y
+     Nigiris. Los fondos se alternan: si se mueve una sección, mover el style. -->
+<section id="combinados">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Com<em>binados</em></h2>
+      <p>Para compartir. Elegí el tamaño según cuántos sean — y si querés que elijamos nosotros, pedí el Omakase.</p>
+    </div>
+    <div class="combis" id="gCombis"></div>
+  </div>
+</section>
+
+<section id="frituras" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap rv">
+    <div class="sec-head">
+      <h2 class="disp">Fri<em>turas</em></h2>
+      <p>Lo que sale caliente de la cocina: harumakis, langostinos apanados y los hot-rolls.</p>
+    </div>
+    <div class="platos" id="gFrituras"></div>
+  </div>
+</section>
+
 <section id="rolls">
   <div class="wrap rv">
     <div class="sec-head">
@@ -405,26 +427,6 @@
       <p>La pieza sola, sin nada que la tape. Salmón rosado y langostino.</p>
     </div>
     <div class="platos" id="gNigiris"></div>
-  </div>
-</section>
-
-<section id="combinados" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
-  <div class="wrap rv">
-    <div class="sec-head">
-      <h2 class="disp">Com<em>binados</em></h2>
-      <p>Para compartir. Elegí el tamaño según cuántos sean — y si querés que elijamos nosotros, pedí el Omakase.</p>
-    </div>
-    <div class="combis" id="gCombis"></div>
-  </div>
-</section>
-
-<section id="frituras">
-  <div class="wrap rv">
-    <div class="sec-head">
-      <h2 class="disp">Fri<em>turas</em></h2>
-      <p>Lo que sale caliente de la cocina: harumakis, langostinos apanados y los hot-rolls.</p>
-    </div>
-    <div class="platos" id="gFrituras"></div>
   </div>
 </section>
 
@@ -1648,6 +1650,6 @@ void main(){
   requestAnimationFrame(cuadro);
 })();
 </script>
-<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: Hugo Rolls (los clásicos), Hugo Bests (los de autor), nigiris, combinados y frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Se retira por el local o va por delivery, que cuesta $4.000 de envío; al armar el pedido la página pregunta cuál y pide nombre, teléfono y, si es delivery, la dirección. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
+<script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: combinados, frituras, Hugo Rolls (los clásicos), Hugo Bests (los de autor) y nigiris. Si el cliente no sabe qué pedir, sugerile primero un combinado (para compartir, según cuántos sean) y sumale algo de frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Se retira por el local o va por delivery, que cuesta $4.000 de envío; al armar el pedido la página pregunta cuál y pide nombre, teléfono y, si es delivery, la dirección. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
 <script src="chat-ia.js" defer></script>
 </body></html>
