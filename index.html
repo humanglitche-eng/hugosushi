@@ -171,6 +171,12 @@
   .add b{font-weight:600;font-size:11px;letter-spacing:.06em;color:var(--mute);}
   .add span{font-weight:600;font-size:13.5px;white-space:nowrap;}
   .add.tiene{border-color:var(--rojo);background:rgba(228,64,39,.18);}
+  /* Plato en promo (052): el precio de lista tachado arriba del rebajado, y la
+     etiqueta al lado del nombre. */
+  .add s{font-size:10.5px;font-weight:500;color:var(--mute);}
+  .li-txt s,.combi-row s{color:var(--mute);font-weight:400;}
+  .promo-tag{display:inline-block;vertical-align:2px;margin-left:4px;padding:2px 7px;border-radius:99px;
+    font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.03em;color:#fff;background:var(--rojo);}
 
   /* ── COMBINADOS ── */
   .combis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
@@ -679,8 +685,11 @@ let carro=JSON.parse(localStorage.getItem('hugo_carro')||'{}');
    ReferenceError que se lleva puesto lo que estuviera corriendo. */
 let PASO='carrito', COBRO=null, PEDIDO=null;
 function guardar(){ localStorage.setItem('hugo_carro',JSON.stringify(carro)); pintarCarro(); }
-function sumar(clave,nombre,precio,detalle){
-  if(!carro[clave]) carro[clave]={n:nombre,p:precio,d:detalle||'',q:0};
+/* Un plato en promo guarda el precio de lista (`l`) para tacharlo y `f` si
+   queda fuera del descuento por efectivo: es la misma cuenta que hace el
+   server, y la carta la necesita para mostrar el total antes de confirmar. */
+function sumar(clave,nombre,precio,detalle,lista,fuera){
+  if(!carro[clave]) carro[clave]={n:nombre,p:precio,d:detalle||'',q:0,l:lista||null,f:!!fuera};
   carro[clave].q++; guardar();
 }
 function restar(clave){ if(!carro[clave])return; carro[clave].q--; if(carro[clave].q<=0) delete carro[clave]; guardar(); }
@@ -701,7 +710,7 @@ function pintarCarro(){
     ? '<p class="vacio-c">Todavía no elegiste nada.</p>'
     : Object.entries(carro).map(([k,i])=>`
       <div class="li">
-        <div class="li-txt"><b>${esc(i.n)}</b><span>${esc(i.d)} · ${fmt(i.p)}</span></div>
+        <div class="li-txt"><b>${esc(i.n)}</b><span>${esc(i.d)} · ${i.l?`<s>${fmt(i.l)}</s> `:''}${fmt(i.p)}</span></div>
         <div class="qty">
           <button data-menos="${esc(k)}" aria-label="Quitar uno">−</button>
           <span class="num">${i.q}</span>
@@ -728,9 +737,12 @@ function pintarCarro(){
    carta se arma con ellas y anda igual. Y aportan lo único que el server no
    sabe: qué combinado va destacado.
 
-   Cada plato queda así: {id, n, d, sec, img, foto, dest, sin, vs:[{slug, et, p, sin}]}
+   Cada plato queda así: {id, n, d, sec, img, foto, dest, sin, promo, vs:[{slug, et, p, l, sin}]}
    — `img` es la foto que viene con el sitio (img/<img>.jpg), `foto` la que subió
-   el dueño desde el panel, que manda; `p` en pesos; `sin` = hoy no hay. */
+   el dueño desde el panel, que manda; `p` en pesos; `sin` = hoy no hay.
+   Con un descuento prendido (052) `p` es el precio rebajado, `l` el de lista
+   para tacharlo, y `promo` = {pct, suma, nombre}. Sin server no hay promos: la
+   carta de adentro no inventa descuentos que nadie prendió. */
 const API='https://api.hg-vl.com/v1/hugo';
 const API_ORIGEN=new URL(API).origin;
 const LOCAL=new Map([...BESTS,...ROLLS,...NIGIRIS,...FRITURAS,...COMBIS].map(x=>[x.id,x]));
@@ -742,7 +754,7 @@ function porcionesLocales(x){
   return [{slug:'u',et:'porción',p:x.p}];
 }
 const CARTA_LOCAL=[...LOCAL.values()].map(x=>({id:x.id,n:x.n,d:x.d,sec:x.sec||'Combinados',
-  img:x.img||null,foto:null,dest:!!x.dest,sin:false,vs:porcionesLocales(x)}));
+  img:x.img||null,foto:null,dest:!!x.dest,sin:false,promo:null,vs:porcionesLocales(x)}));
 let CARTA=CARTA_LOCAL;
 
 function desdeServer(items){
@@ -753,7 +765,10 @@ function desdeServer(items){
       img:i.imagen||loc.img||null,
       foto:i.foto?(i.foto.startsWith('/')?API_ORIGEN+i.foto:i.foto):null,
       dest:!!loc.dest, sin:i.disponible===false,
-      vs:i.variantes.map(v=>({slug:v.slug,et:v.etiqueta,p:v.precio/100,sin:v.alcanza===false}))};   // el server guarda centavos
+      promo:i.promo?{pct:i.promo.porcentaje,suma:i.promo.se_suma===true,nombre:i.promo.nombre}:null,
+      vs:i.variantes.map(v=>({slug:v.slug,et:v.etiqueta,                       // el server guarda centavos
+        p:(v.precio_promo!=null?v.precio_promo:v.precio)/100,
+        l:v.precio_promo!=null?v.precio/100:null, sin:v.alcanza===false}))};
   });
 }
 
@@ -771,8 +786,12 @@ function boton(x,v,unica){
   const pz=piezas(v.et), sin=x.sin||v.sin;
   const rot=unica?'agregar':(pz?'x'+pz+' piezas':v.et);
   const nom=unica?x.n:x.n+' ('+(pz?'x'+pz:v.et)+')';
-  return `<button class="add" data-k="${esc(claveDe(x,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${sin?' disabled title="Hoy no hay"':''}><b>${esc(rot)}</b><span class="num">${sin?'hoy no hay':fmt(v.p)}</span></button>`;
+  return `<button class="add" data-k="${esc(claveDe(x,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${promoData(x,v)}${sin?' disabled title="Hoy no hay"':''}><b>${esc(rot)}</b>${v.l&&!sin?`<s class="num">${fmt(v.l)}</s>`:''}<span class="num">${sin?'hoy no hay':fmt(v.p)}</span></button>`;
 }
+/* Lo que el botón le pasa al carrito de un plato en promo: el precio de lista
+   y si queda fuera del descuento por efectivo. */
+const promoData=(x,v)=>v.l?` data-l="${v.l}"${x.promo&&!x.promo.suma?' data-f="1"':''}`:'';
+const etiquetaPromo=x=>x.promo?`<span class="promo-tag">−${x.promo.pct}%</span>`:'';
 
 /* `conFoto` = la sección tiene al menos un plato con imagen. Si lo tiene, los
    que no la tienen llevan un marcador del mismo alto (si no, la tarjeta se
@@ -786,7 +805,7 @@ function tarjeta(x,_i,arr){
     : (conFoto?'<div class="plato-img sinfoto"><span>鮨</span></div>':'');
   const unica=x.vs.length===1;
   return `<article class="plato">${foto}
-    <div class="plato-body"><h3>${esc(x.n)}</h3><p>${esc(x.d)}</p>
+    <div class="plato-body"><h3>${esc(x.n)} ${etiquetaPromo(x)}</h3><p>${esc(x.d)}</p>
       <div class="add-row">${x.vs.map(v=>boton(x,v,unica)).join('')}</div></div></article>`;
 }
 function pintarGrilla(cont,lista){
@@ -795,15 +814,15 @@ function pintarGrilla(cont,lista){
 function combi(c){
   const unica=c.vs.length===1;
   return `<div class="combi${c.dest?' dest':''}">
-    <h3 class="disp">${esc(c.n)}</h3><p>${esc(c.d)}</p>
+    <h3 class="disp">${esc(c.n)} ${etiquetaPromo(c)}</h3><p>${esc(c.d)}</p>
     ${c.vs.map(v=>{
       const pz=piezas(v.et), sin=c.sin||v.sin;
       const nom=unica?c.n:c.n+(pz?' '+pz+' pz':' ('+v.et+')');
       return `
       <div class="combi-row">
         <b>${esc(v.et)}</b>
-        <span class="p num">${sin?'hoy no hay':fmt(v.p)}</span>
-        <button class="mini add" data-k="${esc(claveDe(c,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${sin?' disabled title="Hoy no hay"':''}>Agregar</button>
+        <span class="p num">${sin?'hoy no hay':(v.l?`<s>${fmt(v.l)}</s> `:'')+fmt(v.p)}</span>
+        <button class="mini add" data-k="${esc(claveDe(c,v))}" data-n="${esc(nom)}" data-p="${v.p}" data-d="${esc(v.et)}"${promoData(c,v)}${sin?' disabled title="Hoy no hay"':''}>Agregar</button>
       </div>`;}).join('')}
     ${c.dest?'<p class="nota">Sugerido por la casa.</p>':''}
   </div>`;
@@ -839,6 +858,9 @@ function podarCarro(){
     const h=vivas.get(k);
     if(!h){ delete carro[k]; cambio=true; continue; }
     if(carro[k].p!==h.v.p){ carro[k].p=h.v.p; cambio=true; }
+    // La promo también se pone al día: se prendió, se apagó o cambió de regla.
+    const l=h.v.l||null, f=!!(h.v.l&&h.x.promo&&!h.x.promo.suma);
+    if(carro[k].l!==l||carro[k].f!==f){ carro[k].l=l; carro[k].f=f; cambio=true; }
   }
   if(cambio) localStorage.setItem('hugo_carro',JSON.stringify(carro));
 }
@@ -885,7 +907,8 @@ function pintarTodo(){
   // cuando el dueño sube las suyas, deja de ser cierto.
   $('aclaraBests').hidden=!(grupos.get('gBests')||[]).some(x=>x.img&&!x.foto);
   document.querySelectorAll('.add').forEach(b=>{
-    b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d));
+    b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d,
+      b.dataset.l?+b.dataset.l:null,b.dataset.f==='1'));
   });
   pintarCarro();
   /* La grilla se acaba de reescribir entera. Lo que colgaba de las tarjetas
@@ -897,7 +920,7 @@ function pintarTodo(){
 }
 
 pintarTodo();                                  // primero con la carta de adentro
-sincronizar().then(ok=>{ if(ok) pintarTodo(); });  // y se repinta si el server contesta
+sincronizar().then(ok=>{ if(ok){ pintarTodo(); pintarTira(); } });  // y se repinta si el server contesta
 
 /* ── PARA CUÁNDO (037) ──────────────────────────────────────────────────────
    Los horarios los da el SERVIDOR, no la página: es el comercio el que sabe
@@ -993,8 +1016,8 @@ function mensaje(pedido){
      se arma con el carrito y el código igual se manda. */
   const det = pedido && pedido.lineas;
   const li = det
-    ? det.map(l=>`• ${l.cantidad}× ${`${l.nombre} ${l.etiqueta||''}`.trim()} — ${fmt(l.precio*l.cantidad/100)}`).join('\n')
-    : Object.values(carro).map(i=>`• ${i.q}× ${i.n} — ${fmt(i.p*i.q)}`).join('\n');
+    ? det.map(l=>`• ${l.cantidad}× ${`${l.nombre} ${l.etiqueta||''}`.trim()} — ${fmt(l.precio*l.cantidad/100)}${l.promo?` (promo −${l.promo}%)`:''}`).join('\n')
+    : Object.values(carro).map(i=>`• ${i.q}× ${i.n} — ${fmt(i.p*i.q)}${i.l?' (promo)':''}`).join('\n');
   /* El total sale del PEDIDO si lo tiene. Leerlo del carrito funcionaba cuando
      el mensaje se armaba con el carrito todavía lleno; desde la pantalla de
      confirmación el carrito ya se vació, y el cliente veía «Total: $ 0». */
@@ -1139,8 +1162,20 @@ function formas(){
    recién en el ticket no lo hace menos real, lo hace inútil como razón para
    elegir retiro. La cuenta es la misma que hace el server. */
 const dtoEfec=()=>(COBRO&&COBRO.descuento_efectivo)||0;
-const llevaDto=()=>dtoEfec()>0&&DATOS.entrega==='retiro'&&DATOS.pago==='efectivo';
-const totalConDto=()=>llevaDto()?Math.round(totalCarro()*(100-dtoEfec())/100):totalCarro();
+/* Lo que el descuento por efectivo puede tocar: todo menos los platos con una
+   promo que no se suma (052). Si no queda nada, no hay descuento que anunciar. */
+const baseDto=()=>Object.values(carro).filter(i=>!i.f).reduce((s,i)=>s+i.p*i.q,0);
+const hayFuera=()=>Object.values(carro).some(i=>i.f);
+const llevaDto=()=>dtoEfec()>0&&DATOS.entrega==='retiro'&&DATOS.pago==='efectivo'&&baseDto()>0;
+/* En centavos, como el server: redondear en pesos daba otro número cuando la
+   promo deja medio peso. */
+const totalConDto=()=>{
+  if(!llevaDto()) return totalCarro();
+  const t=Math.round(totalCarro()*100), b=Math.round(baseDto()*100);
+  return (t-(b-Math.round(b*(100-dtoEfec())/100)))/100;
+};
+const textoDto=()=>`Retirando y pagando en efectivo te hacemos ${dtoEfec()}%`
+  +(hayFuera()?' (no corre sobre los platos que ya están en promo).':'.');
 
 function pintarPagos(){
   const fs=formas(), caja=$('fPagoBox');
@@ -1181,11 +1216,12 @@ function pintarTotal2(){
     : fmt(totalCarro()+env);
   $('envRow').hidden = !env;
   $('envMonto').textContent = fmt(env);
-  $('dtoNota').hidden = !dtoEfec() || llevaDto();
-  $('dtoNota').textContent = dtoEfec()
-    ? `Retirando y pagando en efectivo te hacemos ${dtoEfec()}%.` : '';
+  // Con todo el pedido en promos que no se suman, el 10% no tiene sobre qué correr: no se promete.
+  $('dtoNota').hidden = !dtoEfec() || llevaDto() || !baseDto();
+  $('dtoNota').textContent = dtoEfec() ? textoDto() : '';
   $('dtoOk').hidden = !llevaDto();
-  $('dtoOk').textContent = llevaDto() ? `Te descontamos ${dtoEfec()}% por retirarlo y pagarlo en efectivo.` : '';
+  $('dtoOk').textContent = llevaDto()
+    ? `Te descontamos ${dtoEfec()}% por retirarlo y pagarlo en efectivo${hayFuera()?', menos en los platos en promo, que ya tienen el suyo':''}.` : '';
 }
 
 function irADatos(via){
@@ -1220,7 +1256,7 @@ async function confirmar(b){
   /* El total del carrito ANTES de mandarlo: un pedido que el server reconoce
      como repetido vuelve solo con el código, y sin esto la pantalla de
      transferencia le pide al cliente que gire un importe en blanco. */
-  const totalLocal=totalConDto()*100;
+  const totalLocal=Math.round(totalConDto()*100);
   /* Y una foto de las líneas, por el mismo motivo: un pedido repetido vuelve
      sin detalle y para entonces el carrito ya no está. */
   const lineasLocal=Object.values(carro).map(i=>({cantidad:i.q,nombre:i.n,etiqueta:'',precio:i.p*100}));
@@ -1381,7 +1417,14 @@ $('bVaciar').onclick=()=>{ carro={}; guardar(); };
 /* tira de promos, duplicada para que el loop no corte */
 const PROMOS=['Pedidos hasta las 23 h','Promos diarias','Rolls sin corte','Todos los medios de pago',
   '10% off retirando en efectivo','Delivery & take away','Japanese food en Ushuaia'];
-$('tiraIn').innerHTML=[...PROMOS,...PROMOS].map(p=>`<span>${p} ✦</span>`).join('');
+/* Los descuentos que el dueño prendió (052) van primero, con su nombre: es lo
+   que cambia de un día para el otro y lo que tiene que verse. */
+function pintarTira(){
+  const promos=[...new Set(CARTA.filter(x=>x.promo).map(x=>`${x.promo.nombre} · ${x.promo.pct}% OFF`))];
+  const todas=[...promos,...PROMOS];
+  $('tiraIn').innerHTML=[...todas,...todas].map(p=>`<span>${esc(p)} ✦</span>`).join('');
+}
+pintarTira();
 
 pintarCarro();
 
