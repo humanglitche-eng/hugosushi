@@ -43,7 +43,10 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800;900&family=Russo+One&display=swap" rel="stylesheet">
-<link rel="icon" href="img/logo.jpg">
+<link rel="icon" href="img/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <style>
   :root{
     --bg:#0a0908; --bg2:#121110; --card:#171513; --ink:#f6f1ea;
@@ -85,32 +88,30 @@
   @media(max-width:980px){ .nav-links a{display:none;} .nav-links .btn{display:inline-block;} }
 
   /* ── HERO ── */
-  .hero{position:relative;overflow:hidden;padding:66px 0 74px;}
-  .hero::before{content:'';position:absolute;left:50%;top:-10%;width:min(1100px,120vw);height:620px;
-    transform:translateX(-50%);background:radial-gradient(closest-side,rgba(228,64,39,.24),transparent 72%);
-    pointer-events:none;}
+  /* Fondo = el logo de Hugo (2026-10-23, pedido del dueño). El rojo del logo se
+     normalizó a #fe0808 exacto y va en PNG: el JPEG original tenía el rojo con
+     ruido y el cuadrado se distinguía del fondo. Con el mismo rojo de los dos
+     lados no hay costura en ningún ancho. Sobre rojo, lo que era rojo pasa a negro. */
+  .hero{position:relative;overflow:hidden;padding:66px 0 74px;background:#fe0808;}
+  .hero .kicker{color:#fff;}
+  .hero .kicker::before{background:#0a0908;}
+  .hero .btn{background:#0a0908;color:#fff;}
+  .hero .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.6);}
+  .hero .btn.ghost:hover{border-color:#fff;}
+  .hero-logo{position:relative;display:flex;justify-content:center;align-items:center;}
+  .hero-logo img{display:block;width:min(100%,520px);height:auto;}
   .hero-in{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;}
   .kicker{display:inline-flex;align-items:center;gap:9px;font-size:11.5px;font-weight:500;
     letter-spacing:.22em;text-transform:uppercase;color:var(--rojo-2);margin-bottom:16px;}
   .kicker::before{content:'';width:24px;height:2px;background:var(--rojo);}
   .hero h1{font-size:clamp(2.5rem,5.6vw,4.4rem);font-weight:900;line-height:.97;letter-spacing:-.035em;}
-  .hero h1 em{font-style:normal;color:var(--rojo);}
-  .hero p{margin:18px 0 26px;color:var(--dim);font-size:17px;max-width:44ch;}
+  .hero h1 em{font-style:normal;color:#0a0908;}
+  .hero p{margin:18px 0 26px;color:rgba(255,255,255,.92);font-size:17px;max-width:44ch;}
   .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
-  /* Las piezas vienen sobre negro puro. Con blend screen ese negro se funde con
-     el fondo y la pieza queda de verdad sin fondo — sin recortes ni halos. */
-  .hero-art{position:relative;min-height:400px;}
-  /* la máscara radial come el degradé gris que el render deja alrededor: sin
-     ella, screen lo levanta y se ve el rectángulo de la imagen */
-  .hero-art img{position:absolute;mix-blend-mode:screen;
-    -webkit-mask-image:radial-gradient(circle at 50% 48%,#000 52%,transparent 76%);
-            mask-image:radial-gradient(circle at 50% 48%,#000 52%,transparent 76%);}
-  .hero-art img:nth-child(1){width:56%;left:16%;top:2%;z-index:3;animation:flota 7s ease-in-out infinite;}
-  .hero-art img:nth-child(2){width:40%;left:0;top:46%;z-index:2;animation:flota 8.5s ease-in-out infinite .6s;}
-  .hero-art img:nth-child(3){width:44%;right:0;top:52%;z-index:1;animation:flota 9.5s ease-in-out infinite 1.2s;}
-  @keyframes flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-  @media(max-width:980px){ .hero-in{grid-template-columns:1fr;} .hero-art{min-height:300px;order:-1;} }
-  @media(prefers-reduced-motion:reduce){ .hero-art img{animation:none;} }
+  @media(max-width:980px){ .hero-in{grid-template-columns:1fr;}
+    .hero-logo{order:-1;margin:-30px 0 -20px;} .hero-logo img{width:min(78vw,360px);} }
+  /* La tira va pegada al hero: en negro, para que los dos rojos no se empasten. */
+  .hero + .tira{background:#0a0908;}
 
   /* ── TIRA ── */
   .tira{background:var(--rojo);color:#fff;overflow:hidden;padding:11px 0;}
@@ -148,7 +149,10 @@
      el DOM (alt, SEO, y lo que se ve si WebGL falla) y recién se oculta
      cuando su canvas ya tiene el primer cuadro listo, para no parpadear. */
   .plato-img canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
-  #gBests .plato-img.domo-listo img{opacity:0;}
+  #gBests .plato-img.domo-listo img,#gCombis .plato-img.domo-listo img{opacity:0;}
+  /* La foto del combinado ocupa el ancho de la tarjeta, arriba. 4:3 como el
+     archivo: el domo estira la foto al tamaño del canvas. */
+  .combi-img{aspect-ratio:4/3;margin:-22px -20px 16px;border-radius:calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;}
   .plato-img.sinfoto{display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 50% 45%,rgba(228,64,39,.10),transparent 68%);}
   .plato-img.sinfoto span{font-size:74px;color:rgba(246,241,234,.07);line-height:1;}
@@ -362,16 +366,14 @@
     <div>
       <span class="kicker">Ushuaia · Delivery &amp; take away</span>
       <h1>El sushi del <em>fin del mundo</em>.</h1>
-      <p>Rolls, nigiris y combinados hechos el día. Elegí lo que querés, armá tu pedido y te lo mandamos ya escrito por WhatsApp — sin capturas ni idas y vueltas.</p>
+      <p>El mejor sushi de la ciudad, hecho con salmón, langostinos, productos locales y diferentes mariscos. Hacé tu pedido, armalo como quieras o elegí nuestros combinados. ¡Podés pedir por el chat o por WhatsApp!</p>
       <div class="hero-ctas">
         <a class="btn" href="#combinados">Armar mi pedido</a>
         <a class="btn ghost" href="inmersivo.html">Experiencia inmersiva ✦</a>
       </div>
     </div>
-    <div class="hero-art">
-      <img src="img/hawai-smoke.jpg" alt="Roll Hawai Smoke con salmón flambeado" fetchpriority="high">
-      <img src="img/beetroot.jpg" alt="Roll Beetroot con cubierta de remolacha" loading="lazy">
-      <img src="img/sweet-mango.jpg" alt="Roll Sweet Mango" loading="lazy">
+    <div class="hero-logo">
+      <img src="img/hero-logo.png" alt="" width="1080" height="1080" fetchpriority="high">
     </div>
   </div>
 </header>
@@ -390,6 +392,7 @@
       <p>Para compartir. Elegí el tamaño según cuántos sean — y si querés que elijamos nosotros, pedí el Omakase.</p>
     </div>
     <div class="combis" id="gCombis"></div>
+    <p class="aclara" id="aclaraCombis" hidden>Las imágenes de los combinados son ilustrativas: la cantidad de piezas y las variedades cambian según el tamaño que elijas.</p>
   </div>
 </section>
 
@@ -811,9 +814,16 @@ function tarjeta(x,_i,arr){
 function pintarGrilla(cont,lista){
   $(cont).innerHTML=lista.map(tarjeta).join('');
 }
+/* Fotos de los combinados (2026-10-23): generadas sobre negro puro para que
+   el domo 3D las recorte, una por combinado, en 4:3 como su marco. La que
+   sube el dueño desde el panel manda, pero esa se ve plana: vive en otro
+   origen y WebGL no puede leerla. */
+const FOTOS_COMBI=new Set(['allroll','salmon','mixto','vegetariano','omakase','ensalada']);
+const fotoCombi=c=>c.foto||(FOTOS_COMBI.has(c.id)?'img/combi-'+c.id+'.jpg':'');
 function combi(c){
-  const unica=c.vs.length===1;
+  const unica=c.vs.length===1, src=fotoCombi(c);
   return `<div class="combi${c.dest?' dest':''}">
+    ${src?`<div class="plato-img combi-img"><img src="${esc(src)}" alt="${esc(c.n)}" loading="lazy"></div>`:''}
     <h3 class="disp">${esc(c.n)} ${etiquetaPromo(c)}</h3><p>${esc(c.d)}</p>
     ${c.vs.map(v=>{
       const pz=piezas(v.et), sin=c.sin||v.sin;
@@ -906,6 +916,7 @@ function pintarTodo(){
   // El aviso de «imágenes ilustrativas» vale mientras quede alguna generada:
   // cuando el dueño sube las suyas, deja de ser cierto.
   $('aclaraBests').hidden=!(grupos.get('gBests')||[]).some(x=>x.img&&!x.foto);
+  $('aclaraCombis').hidden=!cs.some(x=>!x.foto&&FOTOS_COMBI.has(x.id));
   document.querySelectorAll('.add').forEach(b=>{
     b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d,
       b.dataset.l?+b.dataset.l:null,b.dataset.f==='1'));
@@ -1674,7 +1685,9 @@ void main(){
       if(ext) ext.loseContext();
     }
     piezas.length=0;
-    document.querySelectorAll('#gBests .plato-img').forEach(cont=>{
+    /* Bests (7) y Combinados (6): 13 contextos, todavía por debajo de los ~16
+       que aguanta el navegador. */
+    document.querySelectorAll('#gBests .plato-img, #gCombis .plato-img').forEach(cont=>{
       const img=cont.querySelector('img');
       if(!img) return;
       /* Solo las fotos que vienen con el sitio: la que sube el dueño vive en
