@@ -86,6 +86,22 @@
   .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
   .btn.ghost:hover{border-color:var(--dim);filter:none;}
   @media(max-width:980px){ .nav-links a{display:none;} .nav-links .btn{display:inline-block;} }
+  /* Barra de secciones del celular: fija bajo la nav (64 px), se desliza de
+     costado y marca la sección en la que está el cliente. */
+  .secs{display:none;}
+  section[id]{scroll-margin-top:72px;}
+  @media(max-width:980px){
+    .secs{display:flex;gap:8px;position:sticky;top:64px;z-index:55;overflow-x:auto;
+      padding:10px 16px;background:rgba(10,9,8,.94);backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);scrollbar-width:none;}
+    .secs::-webkit-scrollbar{display:none;}
+    .secs a{flex:none;padding:8px 15px;border:1px solid var(--line);border-radius:999px;
+      color:var(--dim);text-decoration:none;font-size:13.5px;font-weight:500;white-space:nowrap;
+      transition:background .2s,color .2s,border-color .2s;}
+    .secs a[aria-current="true"]{background:var(--rojo);border-color:var(--rojo);color:#fff;}
+    .secs a[hidden]{display:none;}
+    section[id]{scroll-margin-top:124px;}
+  }
 
   /* ── HERO ── */
   /* Fondo = el logo de Hugo (2026-10-23, pedido del dueño). El rojo del logo se
@@ -326,6 +342,8 @@
   @media(max-width:860px){ .split{grid-template-columns:1fr;gap:28px;} }
 
   /* ── GALERÍA ── */
+  /* El <picture> no arma caja: la grilla y el .plato-img siguen viendo al <img>. */
+  picture{display:contents;}
   .tira-fotos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
   .tira-fotos img{border-radius:10px;aspect-ratio:1;object-fit:cover;width:100%;}
   @media(max-width:820px){ .tira-fotos{grid-template-columns:1fr 1fr;} }
@@ -373,13 +391,23 @@
       </div>
     </div>
     <div class="hero-logo">
-      <img src="img/hero-logo.png" alt="" width="1080" height="1080" fetchpriority="high">
+      <picture><source type="image/webp" srcset="img/hero-logo.webp"><img src="img/hero-logo.png" alt="" width="1080" height="1080" fetchpriority="high"></picture>
     </div>
   </div>
 </header>
 
 <div class="tira">
   <div class="tira-in" id="tiraIn" aria-hidden="true"></div>
+</div>
+
+<!-- Barra de secciones (solo celular): debajo de 980 px el menú de arriba se
+     oculta y la carta mide ~28 pantallas. Va fija bajo la navegación. -->
+<div class="secs" id="secs" role="navigation" aria-label="Secciones de la carta">
+  <a href="#combinados">Combinados</a>
+  <a href="#frituras">Frituras</a>
+  <a href="#rolls">Rolls</a>
+  <a href="#bests">Hugo Bests</a>
+  <a href="#nigiris">Nigiris</a>
 </div>
 
 <!-- Orden de la carta (2026-10-20, a pedido del dueño): primero Combinados y
@@ -445,7 +473,7 @@
 <section style="background:var(--bg2);border-top:1px solid var(--line);">
   <div class="wrap rv">
     <div class="split">
-      <img src="img/chef.jpg" alt="La barra de Hugo Sushi trabajando" loading="lazy">
+      <picture><source type="image/webp" srcset="img/chef.webp"><img src="img/chef.jpg" alt="La barra de Hugo Sushi trabajando" loading="lazy"></picture>
       <div>
         <h2 class="disp">Hecho acá, <em>en Ushuaia</em></h2>
         <p>Somos los mismos de siempre: antes Oishi, ahora Hugo. La misma barra, la misma gente y el mismo pescado.</p>
@@ -465,10 +493,10 @@
   <div class="wrap rv">
     <div class="sec-head"><h2 class="disp">De la <em>barra</em></h2></div>
     <div class="tira-fotos">
-      <img src="img/tabla-mixta.jpg" alt="Tabla mixta de rolls" loading="lazy">
-      <img src="img/nigiri-salmon.jpg" alt="Nigiris de salmón" loading="lazy">
-      <img src="img/mango-tabla.jpg" alt="Rolls con cubierta de mango" loading="lazy">
-      <img src="img/combinado-grande.jpg" alt="Combinado grande para compartir" loading="lazy">
+      <picture><source type="image/webp" srcset="img/tabla-mixta.webp"><img src="img/tabla-mixta.jpg" alt="Tabla mixta de rolls" loading="lazy"></picture>
+      <picture><source type="image/webp" srcset="img/nigiri-salmon.webp"><img src="img/nigiri-salmon.jpg" alt="Nigiris de salmón" loading="lazy"></picture>
+      <picture><source type="image/webp" srcset="img/mango-tabla.webp"><img src="img/mango-tabla.jpg" alt="Rolls con cubierta de mango" loading="lazy"></picture>
+      <picture><source type="image/webp" srcset="img/combinado-grande.webp"><img src="img/combinado-grande.jpg" alt="Combinado grande para compartir" loading="lazy"></picture>
     </div>
   </div>
 </section>
@@ -800,11 +828,26 @@ const etiquetaPromo=x=>x.promo?`<span class="promo-tag">−${x.promo.pct}%</span
    que no la tienen llevan un marcador del mismo alto (si no, la tarjeta se
    estira para igualar a las vecinas y queda un hueco). Si la sección entera va
    sin fotos, no se dibuja el área de imagen en ninguna. */
+/* Las fotos del sitio van en WebP (≈70% menos de peso; img/*.webp, 720 px)
+   con el JPG de respaldo. La que sube el dueño viene como está. */
+const fotoHTML=(src,alt)=>{
+  const img=`<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="fotoFallo(this)">`;
+  return /^img\/.+\.jpg$/.test(src)
+    ? `<picture><source type="image/webp" srcset="${esc(src.replace(/\.jpg$/,'.webp'))}">${img}</picture>` : img;
+};
+/* Si falta el WebP de una foto, se saca el <source> y el navegador cae solo
+   al JPG; si falla también el JPG, la tarjeta queda con el marcador. */
+function fotoFallo(img){
+  const s=img.parentNode.tagName==='PICTURE'&&img.parentNode.querySelector('source');
+  if(s){ s.remove(); img.src=img.getAttribute('src'); return; }
+  const c=img.closest('.plato-img');
+  if(c){ c.classList.add('sinfoto'); (c.querySelector('picture')||img).outerHTML='<span>鮨</span>'; }
+}
 function tarjeta(x,_i,arr){
   const conFoto=arr.some(y=>y.foto||y.img);
   const src=x.foto||(x.img?'img/'+x.img+'.jpg':'');
   const foto=src
-    ? `<div class="plato-img"><img src="${esc(src)}" alt="${esc(x.n)}" loading="lazy" onerror="this.parentNode.classList.add('sinfoto');this.outerHTML='<span>鮨</span>'"></div>`
+    ? `<div class="plato-img">${fotoHTML(src,x.n)}</div>`
     : (conFoto?'<div class="plato-img sinfoto"><span>鮨</span></div>':'');
   const unica=x.vs.length===1;
   return `<article class="plato">${foto}
@@ -823,7 +866,7 @@ const fotoCombi=c=>c.foto||(FOTOS_COMBI.has(c.id)?'img/combi-'+c.id+'.jpg':'');
 function combi(c){
   const unica=c.vs.length===1, src=fotoCombi(c);
   return `<div class="combi${c.dest?' dest':''}">
-    ${src?`<div class="plato-img combi-img"><img src="${esc(src)}" alt="${esc(c.n)}" loading="lazy"></div>`:''}
+    ${src?`<div class="plato-img combi-img">${fotoHTML(src,c.n)}</div>`:''}
     <h3 class="disp">${esc(c.n)} ${etiquetaPromo(c)}</h3><p>${esc(c.d)}</p>
     ${c.vs.map(v=>{
       const pz=piezas(v.et), sin=c.sin||v.sin;
@@ -917,6 +960,9 @@ function pintarTodo(){
   // cuando el dueño sube las suyas, deja de ser cierto.
   $('aclaraBests').hidden=!(grupos.get('gBests')||[]).some(x=>x.img&&!x.foto);
   $('aclaraCombis').hidden=!cs.some(x=>!x.foto&&FOTOS_COMBI.has(x.id));
+  // la barra de secciones no ofrece una sección que hoy está vacía
+  document.querySelectorAll('#secs a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href')); a.hidden=!s||s.hidden; });
   document.querySelectorAll('.add').forEach(b=>{
     b.addEventListener('click',()=>sumar(b.dataset.k,b.dataset.n,+b.dataset.p,b.dataset.d,
       b.dataset.l?+b.dataset.l:null,b.dataset.f==='1'));
@@ -1437,6 +1483,32 @@ function pintarTira(){
 }
 pintarTira();
 
+/* La barra de secciones marca dónde está el cliente y se corre sola para que
+   ese botón quede a la vista. Se mide en el scroll: son cinco secciones. */
+(function(){
+  const barra=$('secs'); if(!barra) return;
+  const links=[...barra.querySelectorAll('a')];
+  let actual=null, pendiente=false;
+  function marcar(){
+    pendiente=false;
+    if(getComputedStyle(barra).display==='none') return;   // en compu no se usa
+    let elegido=null;
+    for(const a of links){
+      const s=!a.hidden&&document.querySelector(a.getAttribute('href'));
+      if(s&&s.getBoundingClientRect().top<=150) elegido=a;
+    }
+    if(elegido===actual) return;
+    if(actual) actual.removeAttribute('aria-current');
+    actual=elegido;
+    if(actual){
+      actual.setAttribute('aria-current','true');
+      barra.scrollTo({left:actual.offsetLeft-(barra.clientWidth-actual.clientWidth)/2,behavior:'smooth'});
+    }
+  }
+  addEventListener('scroll',()=>{ if(!pendiente){ pendiente=true; requestAnimationFrame(marcar); } },{passive:true});
+  marcar();
+})();
+
 pintarCarro();
 
 // reveals — threshold 0: una sección más alta que el viewport nunca alcanza un umbral porcentual
@@ -1459,6 +1531,8 @@ document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 (function(){
   const gl0=document.createElement('canvas').getContext('webgl2');
   if(!gl0) return;   // sin WebGL2 la grilla queda exactamente como hoy — el <img> ya está puesto
+  // la prueba no se queda con un contexto: el navegador aguanta pocos
+  const ext0=gl0.getExtension('WEBGL_lose_context'); if(ext0) ext0.loseContext();
 
   function compilar(gl,tipo,src){
     const s=gl.createShader(tipo); gl.shaderSource(s,src); gl.compileShader(s);
@@ -1572,8 +1646,19 @@ void main(){
   o=vec4(max(col,0.0)*alfaOut, alfaOut);
 }`;
 
+  /* ── Quién mueve el relieve ────────────────────────────────────────────
+     Con mouse, la distancia del puntero a cada tarjeta, como siempre. En un
+     teléfono no hay puntero que siga al dedo y el relieve quedaba quieto: ahí
+     lo mueve el SCROLL, y el 3D se ve también en el celular. Si en un táctil
+     aparece un mouse, pasa a modo mouse. */
   const raton={x:innerWidth/2,y:innerHeight/2};
-  addEventListener('pointermove', e=>{ raton.x=e.clientX; raton.y=e.clientY; }, {passive:true});
+  let conMouse=matchMedia('(hover: hover) and (pointer: fine)').matches;
+  addEventListener('pointermove', e=>{
+    if(e.pointerType==='mouse') conMouse=true;
+    raton.x=e.clientX; raton.y=e.clientY; despertar();
+  }, {passive:true});
+  addEventListener('scroll', ()=>despertar(), {passive:true});
+  addEventListener('resize', ()=>despertar(), {passive:true});
 
   const piezas=[];
 
@@ -1582,7 +1667,7 @@ void main(){
     canvas.setAttribute('aria-hidden','true');
     cont.appendChild(canvas);
     const gl=canvas.getContext('webgl2',{alpha:true,antialias:false,premultipliedAlpha:true});
-    if(!gl) return;
+    if(!gl){ canvas.remove(); return null; }
     const b=gl.createBuffer();
     const vao=gl.createVertexArray(); gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER,b);
@@ -1590,14 +1675,15 @@ void main(){
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
     gl.bindVertexArray(null);
     const prog=programa(gl,VS_TRI,FS_PIEZA);
-    if(!prog) return;
+    if(!prog){ canvas.remove(); return null; }
     const U=n=>gl.getUniformLocation(prog,n);
     const uni={uFoto:U('uFoto'),uGeo:U('uGeo'),uPar:U('uPar'),uFade:U('uFade'),uSombra:U('uSombra'),uZ:U('uZ')};
-    const p={cont,canvas,gl,prog,uni,vao,listo:false};
+    const p={cont,canvas,gl,prog,uni,vao,listo:false,ult:null,suelta:false};
     piezas.push(p);
 
     const img=new Image();
     img.onload=()=>{
+      if(p.suelta) return;   // se alejó antes de que terminara de bajar
       p.texFoto=textura(gl,2,2,null,true);
       gl.bindTexture(gl.TEXTURE_2D,p.texFoto);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
@@ -1611,31 +1697,37 @@ void main(){
       p.texGeo=textura(gl,m.w,m.h,fl,true);
       p.listo=true;
       cont.classList.add('domo-listo');   // recién ahora se oculta el <img> — sin flash en blanco
+      despertar();
     };
-    img.src='img/'+slug+'.jpg';
+    /* La misma foto que ya eligió el <picture> (WebP si el navegador puede):
+       sale del caché y no se baja dos veces. Si el WebP falla, el JPG. */
+    img.onerror=()=>{ if(!/\.jpg$/.test(img.src)) img.src='img/'+slug+'.jpg'; };
+    const vista=cont.querySelector('img');
+    img.src=(vista&&vista.currentSrc)||('img/'+slug+'.webp');
+    return p;
+  }
+
+  /* Soltar una pieza: su contexto vuelve al navegador y el <img> queda a la vista. */
+  function soltar(p){
+    p.suelta=true;
+    const ext=p.gl.getExtension('WEBGL_lose_context');
+    if(ext) ext.loseContext();
+    p.canvas.remove();
+    p.cont.classList.remove('domo-listo');
+    const i=piezas.indexOf(p); if(i>=0) piezas.splice(i,1);
   }
 
   function medirTarjeta(p){
     const rect=p.cont.getBoundingClientRect();
     const dpr=Math.min(devicePixelRatio||1,1.6);
     const w=Math.max(2,Math.round(rect.width*dpr)), h=Math.max(2,Math.round(rect.height*dpr));
-    if(p.canvas.width!==w||p.canvas.height!==h){ p.canvas.width=w; p.canvas.height=h; }
+    // cambiar el tamaño borra el canvas: hay que volver a dibujarlo
+    if(p.canvas.width!==w||p.canvas.height!==h){ p.canvas.width=w; p.canvas.height=h; p.ult=null; }
     return rect;
   }
 
-  const lerp=(a,b,t)=>a+(b-a)*t;
-  let sx=raton.x, sy=raton.y;
-  function cuadro(){
-    sx=lerp(sx,raton.x,0.12); sy=lerp(sy,raton.y,0.12);
-    piezas.forEach(p=>{
-      if(!p.listo) return;
-      const rect=medirTarjeta(p);
-      if(rect.bottom<0||rect.top>innerHeight) return;   // fuera de vista: no dibujar
-      const gl=p.gl;
-      gl.viewport(0,0,p.canvas.width,p.canvas.height);
-      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-
+  function valores(rect){
+    if(conMouse){
       const ccx=rect.left+rect.width/2, ccy=rect.top+rect.height/2;
       /* radio angosto: a diferencia de la inmersiva (una pieza sola, de
          pantalla completa) acá hay 7 tarjetas juntas — con un radio grande
@@ -1645,48 +1737,78 @@ void main(){
       const radio=Math.max(rect.width,rect.height)*0.62;
       const dx=(sx-ccx)/radio, dy=(sy-ccy)/radio;
       const dist=Math.min(1,Math.hypot(dx,dy));
-      const intensidad=1-dist;
       /* mismo paralaje que en la inmersiva pero a la mitad de magnitud: a
          escala de tarjeta chica, el desplazamiento interno completo corre
          a muestrear una zona real distinta del plato (mango vs arroz vs
          sésamo) y se ve como un remolino de color en vez de profundidad. */
-      const par=[Math.max(-1,Math.min(1,dx))*0.07, -Math.max(-1,Math.min(1,dy))*0.07];
+      return {par:[Math.max(-1,Math.min(1,dx))*0.07, -Math.max(-1,Math.min(1,dy))*0.07], z:1-dist};
+    }
+    /* Con el dedo: la pieza se inclina según su altura en la pantalla —abajo
+       se la ve desde arriba, arriba desde abajo— y se enciende un poco al
+       pasar por el centro. */
+    const t=Math.max(-1,Math.min(1,(rect.top+rect.height/2-innerHeight/2)/(innerHeight/2)));
+    return {par:[0, t*0.07], z:0.6*(1-Math.abs(t))};
+  }
 
+  /* ── Dibujar solo cuando algo cambió ───────────────────────────────────
+     Antes el bucle corría a 60 cuadros por segundo para siempre, aunque
+     nadie tocara nada (301 cuadros en 5 s quieto, medido en un Pixel 7):
+     batería y calor en el teléfono. Ahora lo despiertan el mouse, el scroll,
+     un resize o una foto que termina de cargar; dibuja solo las piezas a la
+     vista cuyos valores cambiaron, y se duerme cuando el suavizado llegó. */
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  let sx=raton.x, sy=raton.y, corriendo=false;
+  function despertar(){ if(!corriendo){ corriendo=true; requestAnimationFrame(cuadro); } }
+  function cuadro(){
+    sx=lerp(sx,raton.x,0.12); sy=lerp(sy,raton.y,0.12);
+    const llego=!conMouse||(Math.abs(sx-raton.x)<0.5&&Math.abs(sy-raton.y)<0.5);
+    for(const p of piezas){
+      if(!p.listo) continue;
+      const rect=medirTarjeta(p);
+      if(rect.bottom<0||rect.top>innerHeight) continue;   // fuera de vista: no dibujar
+      const v=valores(rect), u=p.ult;
+      if(u&&Math.abs(u.par[0]-v.par[0])<1e-4&&Math.abs(u.par[1]-v.par[1])<1e-4&&Math.abs(u.z-v.z)<1e-3) continue;
+      p.ult=v;
+      const gl=p.gl;
+      gl.viewport(0,0,p.canvas.width,p.canvas.height);
+      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
       gl.useProgram(p.prog);
       gl.bindVertexArray(p.vao);
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,p.texFoto); gl.uniform1i(p.uni.uFoto,0);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,p.texGeo); gl.uniform1i(p.uni.uGeo,1);
-      gl.uniform2f(p.uni.uPar,par[0],par[1]);
+      gl.uniform2f(p.uni.uPar,v.par[0],v.par[1]);
       gl.uniform1f(p.uni.uFade,1.0);
       gl.uniform1f(p.uni.uSombra,0.0);
-      gl.uniform1f(p.uni.uZ,intensidad);
+      gl.uniform1f(p.uni.uZ,v.z);
       gl.drawArrays(gl.TRIANGLES,0,3);
-    });
-    requestAnimationFrame(cuadro);
+    }
+    if(llego) corriendo=false; else requestAnimationFrame(cuadro);
   }
 
-  /* ── Montar (y volver a montar) ────────────────────────────────────────
-     El domo se montaba UNA vez, al cargar. Pero `sincronizar()` trae los
-     precios de la API y vuelve a llamar a `pintarTodo()`, que reescribe el
-     innerHTML de la grilla: los canvas recién montados se iban con él y la
-     sección quedaba con el <img> plano.
+  /* ── Montar al acercarse, soltar al alejarse ────────────────────────────
+     El domo se monta cada vez que la grilla se repinta: `sincronizar()` trae
+     la carta de la API y `pintarTodo()` reescribe el innerHTML, y los canvas
+     se iban con él (en local no se notaba: desde localhost la API muere por
+     CORS y el repintado nunca ocurre).
 
-     Lo perverso del caso es que en local NO se notaba. Desde un `localhost`
-     la llamada a la API muere por CORS, `sincronizar()` devuelve false y el
-     repintado nunca ocurre — así que el efecto andaba justo donde no importa
-     y se caía en producción, que es donde lo ve el cliente.
-
-     Ahora se monta cada vez que la grilla se repinta. Soltar los contextos
-     viejos no es opcional: son 7 por pintado y el navegador aguanta unos
-     16 en total — al segundo repintado empezaría a matar los primeros. */
+     Antes las 13 piezas se montaban al abrir: 13 fotos (≈1,3 MB) bajando
+     aunque el cliente nunca llegara a esas secciones —el loading=lazy del
+     <img> no servía de nada— y 13 contextos WebGL vivos, cerca de los ~16
+     que aguanta el navegador (Safari en iPhone puede apagar alguno). Ahora
+     cada tarjeta se monta a menos de una pantalla de distancia y se suelta
+     cuando se aleja: quedan vivas las pocas que están cerca. */
+  let vigia=null;
   function montarDomos(){
-    for(const p of piezas){
-      const ext=p.gl.getExtension('WEBGL_lose_context');
-      if(ext) ext.loseContext();
-    }
-    piezas.length=0;
-    /* Bests (7) y Combinados (6): 13 contextos, todavía por debajo de los ~16
-       que aguanta el navegador. */
+    if(vigia) vigia.disconnect();
+    for(const p of piezas.slice()) soltar(p);
+    vigia=new IntersectionObserver(es=>{
+      for(const e of es){
+        const cont=e.target;
+        if(e.isIntersecting){ if(!cont.__pieza) cont.__pieza=iniciarTarjeta(cont, cont.dataset.slug); }
+        else if(cont.__pieza){ soltar(cont.__pieza); cont.__pieza=null; }
+      }
+    },{rootMargin:'100% 0px'});
     document.querySelectorAll('#gBests .plato-img, #gCombis .plato-img').forEach(cont=>{
       const img=cont.querySelector('img');
       if(!img) return;
@@ -1697,13 +1819,13 @@ void main(){
       if(!src.startsWith('img/')) return;
       const slug=src.replace('img/','').replace('.jpg','');
       if(!slug) return;
-      iniciarTarjeta(cont, slug);
+      cont.dataset.slug=slug;
+      vigia.observe(cont);
     });
   }
 
   montarDomos();
   document.addEventListener('grilla-pintada', montarDomos);
-  requestAnimationFrame(cuadro);
 })();
 </script>
 <script>window.DEMO_CHAT={"offsetY":78,"demo":"hugo","negocio":"HUGO SUSHI","rubro":"sushi delivery & take away","rol":"vendedor","objetivo":"pedido","whatsapp":"5492901300080","color":"#e44027","nombre":"Hugo","firma":"Hugo Sushi","etiqueta":"Ushuaia","demostracion":false,"datos":"Hugo Sushi es un sushi de Ushuaia (Tierra del Fuego), antes se llamaba Oishi. Delivery y take away, pedidos hasta las 23 h todos los días. WhatsApp 2901 30 00 80. Promos diarias que van cambiando (descuentos, piezas extra, 2x1) y 10% de descuento retirando por el local y pagando en efectivo. Hacen rolls sin corte si el cliente lo pide y toman todos los medios de pago. La carta completa con precios está en la página: combinados, frituras, Hugo Rolls (los clásicos), Hugo Bests (los de autor) y nigiris. Si el cliente no sabe qué pedir, sugerile primero un combinado (para compartir, según cuántos sean) y sumale algo de frituras. Los rolls se piden por 4 u 8 piezas y en tandas más grandes, que salen más baratas por pieza. Se retira por el local o va por delivery, que cuesta $4.000 de envío; al armar el pedido la página pregunta cuál y pide nombre, teléfono y, si es delivery, la dirección. Los precios los cambia el local desde su panel: no los digas de memoria, mandalo a ver el precio en cada plato de la carta. La página tiene un armador de pedido: si el cliente duda, guialo a elegir y recordale que puede sumar los platos y mandar el pedido ya armado por WhatsApp. No inventes horarios de apertura ni dirección: para eso, derivá al WhatsApp."};</script>
