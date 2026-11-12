@@ -145,6 +145,15 @@
   @keyframes corre{to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){ .tira-in{animation:none;} }
 
+  /* ── DEMORA ── la prende la API cuando el día ya tiene muchos pedidos */
+  .demora{background:#1d1408;border-bottom:1px solid rgba(240,195,106,.28);color:var(--oro);}
+  .demora .wrap{display:flex;gap:12px;align-items:center;padding-top:12px;padding-bottom:12px;
+    font-size:14px;line-height:1.45;}
+  .demora b{color:#fff;font-weight:600;}
+  .demora-ic{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(240,195,106,.14);font-size:15px;}
+  .demora-nota{font-size:12.5px;color:var(--oro);line-height:1.4;margin-bottom:12px;}
+
   /* ── SECCIONES ── */
   section{padding:74px 0;}
   .sec-head{margin-bottom:34px;}
@@ -388,6 +397,17 @@
   </div>
 </nav>
 
+<!-- Aviso de demora: oculto hasta que la API diga que hoy ya entraron muchos
+     pedidos (GET /demora). Va ARRIBA del hero y no junto a la tira: en un
+     teléfono el hero mide casi dos pantallas y ahí abajo nadie lo veía al
+     entrar. El pedido repite el aviso al lado del botón (.demora-nota). -->
+<div class="demora" id="demora" role="status" hidden>
+  <div class="wrap">
+    <span class="demora-ic" aria-hidden="true">⏱</span>
+    <p><b>Hoy tenemos muchos pedidos.</b> Puede haber más demora de lo habitual. ¡Gracias por la paciencia!</p>
+  </div>
+</div>
+
 <header class="hero" id="top">
   <div class="wrap hero-in">
     <div>
@@ -589,6 +609,7 @@
           <p class="cuando-nota" id="cuandoNota"></p>
         </div>
         <p class="desc-nota" id="dtoCarrito" hidden></p>
+        <p class="demora-nota" hidden>⏱ Hoy hay más demora de lo habitual: tenemos muchos pedidos.</p>
         <button class="btn" id="pSeguir">Continuar</button>
         <button class="link-wa" id="pWa">o pedilo por WhatsApp</button>
       </div>
@@ -597,6 +618,7 @@
         <div class="total-row"><span>Total</span><b class="num" id="pTotal2">$ 0</b></div>
         <p class="desc-nota" id="dtoNota" hidden></p>
         <p class="dto-ok" id="dtoOk" hidden></p>
+        <p class="demora-nota" hidden>⏱ Hoy hay más demora de lo habitual: tenemos muchos pedidos.</p>
         <button class="btn" id="pConfirmar">Confirmar el pedido</button>
         <button class="link-wa" id="pWa2">o pedilo por WhatsApp</button>
       </div>
@@ -1466,7 +1488,7 @@ if(!MUESTRA){
 $('pSeguir').onclick=()=>irADatos('web');
 $('pConfirmar').onclick=e=>VIA==='wa'?porWhatsapp():confirmar(e.currentTarget);
 $('pVolver').onclick=()=>verPaso('carrito');
-const abrir=()=>{ $('panel').classList.add('on'); document.body.classList.add('pidiendo'); };
+const abrir=()=>{ $('panel').classList.add('on'); document.body.classList.add('pidiendo'); verDemora(); };
 $('bVer').onclick=()=>{ if(PASO==='listo') verPaso('carrito'); abrir(); };
 const cerrar=()=>{ $('panel').classList.remove('on'); document.body.classList.remove('pidiendo');
   if(PASO==='listo'){ PEDIDO=null; verPaso('carrito'); } };
@@ -1491,6 +1513,25 @@ function pintarTira(){
   $('tiraIn').innerHTML=[...todas,...todas].map(p=>`<span>${esc(p)} ✦</span>`).join('');
 }
 pintarTira();
+
+/* Aviso de demora: la API dice si hoy ya entraron más pedidos de los que la
+   cocina saca a tiempo (el tope está en el server, ver `demoraDe`); contesta
+   solo sí o no. Se pregunta al cargar, al abrir el pedido y al volver a la
+   pestaña: una carta abierta desde el mediodía no puede seguir diciendo lo de
+   la mañana. Si la API no contesta, queda como estaba: un aviso que falta es
+   mejor que uno que miente. */
+async function verDemora(){
+  let d;
+  try{
+    const r=await fetch(API+'/demora',{signal:AbortSignal.timeout(6000)});
+    if(!r.ok) return;
+    d=!!(await r.json()).demora;
+  }catch(e){ return; }
+  $('demora').hidden=!d;
+  document.querySelectorAll('.demora-nota').forEach(n=>{ n.hidden=!d; });
+}
+verDemora();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') verDemora(); });
 
 /* La barra de secciones marca dónde está el cliente y se corre sola para que
    ese botón quede a la vista. Se mide en el scroll: son cinco secciones. */
