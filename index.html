@@ -145,14 +145,26 @@
   @keyframes corre{to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){ .tira-in{animation:none;} }
 
-  /* ── DEMORA ── la prende la API cuando el día ya tiene muchos pedidos */
-  .demora{background:#1d1408;border-bottom:1px solid rgba(240,195,106,.28);color:var(--oro);}
-  .demora .wrap{display:flex;gap:12px;align-items:center;padding-top:12px;padding-bottom:12px;
-    font-size:14px;line-height:1.45;}
-  .demora b{color:#fff;font-weight:600;}
-  .demora-ic{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
-    background:rgba(240,195,106,.14);font-size:15px;}
+  /* ── AVISO ── ventana de «hay demora» / «estamos cerrados» (GET /demora).
+     Por encima de todo, chat incluido: es lo primero que hay que leer. */
+  .aviso{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;
+    background:rgba(4,3,3,.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    animation:aviso-in .22s ease-out;}
+  .aviso-box{width:min(400px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:20px;
+    padding:30px 26px 24px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.55);
+    animation:aviso-sube .28s cubic-bezier(.2,.8,.2,1);}
+  .aviso-ic{width:58px;height:58px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
+    font-size:26px;background:rgba(240,195,106,.14);border:1px solid rgba(240,195,106,.3);}
+  .aviso.cerrado .aviso-ic{background:rgba(228,64,39,.14);border-color:rgba(228,64,39,.35);}
+  .aviso h3{font-family:'Russo One',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:21px;letter-spacing:.02em;line-height:1.15;margin-bottom:10px;}
+  .aviso p{color:var(--dim);font-size:15px;line-height:1.5;margin-bottom:22px;}
+  .aviso .btn{width:100%;padding:14px;font-size:15px;}
+  @keyframes aviso-in{from{opacity:0}}
+  @keyframes aviso-sube{from{opacity:0;transform:translateY(14px) scale(.98)}}
+  @media(prefers-reduced-motion:reduce){ .aviso,.aviso-box{animation:none;} }
   .demora-nota{font-size:12.5px;color:var(--oro);line-height:1.4;margin-bottom:12px;}
+  .cuando-tab:disabled{opacity:.4;cursor:not-allowed;}
 
   /* ── SECCIONES ── */
   section{padding:74px 0;}
@@ -397,14 +409,17 @@
   </div>
 </nav>
 
-<!-- Aviso de demora: oculto hasta que la API diga que hoy ya entraron muchos
-     pedidos (GET /demora). Va ARRIBA del hero y no junto a la tira: en un
-     teléfono el hero mide casi dos pantallas y ahí abajo nadie lo veía al
-     entrar. El pedido repite el aviso al lado del botón (.demora-nota). -->
-<div class="demora" id="demora" role="status" hidden>
-  <div class="wrap">
-    <span class="demora-ic" aria-hidden="true">⏱</span>
-    <p><b>Hoy tenemos muchos pedidos.</b> Puede haber más demora de lo habitual. ¡Gracias por la paciencia!</p>
+<!-- Ventana de aviso: «hay demora» o «estamos cerrados». La prende la API
+     (GET /demora): la demora sola desde cierto número de pedidos del día, o
+     cualquiera de las dos con los botones del panel de Hugo. Se muestra una
+     vez por visita y por aviso; el pedido lo repite al lado del botón
+     (.demora-nota). -->
+<div class="aviso" id="aviso" role="dialog" aria-modal="true" aria-labelledby="avisoT" aria-describedby="avisoP" hidden>
+  <div class="aviso-box">
+    <div class="aviso-ic" id="avisoIc" aria-hidden="true">⏱</div>
+    <h3 id="avisoT">Hoy tenemos muchos pedidos</h3>
+    <p id="avisoP">Puede haber más demora de lo habitual. ¡Gracias por la paciencia!</p>
+    <button class="btn" id="avisoOk" type="button">Entendido, ver la carta</button>
   </div>
 </div>
 
@@ -1025,6 +1040,7 @@ async function traerAgenda(){
     AGENDA = d;
     $('cuando').hidden = false;
     pintarDias();
+    aplicarCerrado();          // si el aviso de «cerrado» llegó antes que la agenda
   }catch(e){ /* sin agenda, el pedido sale como siempre */ }
 }
 
@@ -1056,14 +1072,16 @@ function frasePara(iso){
   return h ? `${conArticulo(h.dia)} a las ${h.hora}` : '';
 }
 
+/* `huecosPedibles()` y no `AGENDA.huecos`: con el local cerrado no se ofrecen
+   los horarios de hoy (ver el AVISO, más abajo). */
 function pintarDias(){
-  const dias=[...new Set(AGENDA.huecos.map(h=>h.dia))];
+  const dias=[...new Set(huecosPedibles().map(h=>h.dia))];
   $('cDia').innerHTML = dias.map(d=>`<option value="${d}">${nombreDia(d)}</option>`).join('');
   pintarHoras();
 }
 function pintarHoras(){
   const dia=$('cDia').value;
-  const hs=AGENDA.huecos.filter(h=>h.dia===dia);
+  const hs=huecosPedibles().filter(h=>h.dia===dia);
   $('cHora').innerHTML = hs.map(h=>`<option value="${h.iso}">${h.hora}</option>`).join('');
   elegido();
 }
@@ -1314,6 +1332,9 @@ function pintarTotal2(){
 
 function irADatos(via){
   if(piezasCarro()===0) return;
+  /* Cerrado y sin día elegido: no tiene sentido llenar los datos para que el
+     pedido rebote al final. Se queda en el carrito y se repite el aviso. */
+  if(AVISO==='cerrado'&&!PARA){ verPaso('carrito'); abrir(); abrirAviso(); return; }
   VIA = via==='wa' ? 'wa' : 'web';
   verPaso('datos'); abrir();
   setTimeout(()=>{ const n=$('fNombre'); if(n&&!n.value) n.focus(); },80);
@@ -1339,6 +1360,8 @@ function validar(){
 
 async function confirmar(b){
   if(MUESTRA) return;            // en la vitrina el botón está apagado; esto es el cinturón
+  // Cerrado: solo encargues para otro día (el server frena igual los de hoy).
+  if(AVISO==='cerrado'&&!PARA){ $('fErr').textContent=TEXTOS_AVISO.cerrado.nota(); return; }
   if(!validar()) return;
   b=b||$('pConfirmar'); b.disabled=true; b.textContent='Tomando el pedido…';
   /* El total del carrito ANTES de mandarlo: un pedido que el server reconoce
@@ -1514,21 +1537,89 @@ function pintarTira(){
 }
 pintarTira();
 
-/* Aviso de demora: la API dice si hoy ya entraron más pedidos de los que la
-   cocina saca a tiempo (el tope está en el server, ver `demoraDe`); contesta
-   solo sí o no. Se pregunta al cargar, al abrir el pedido y al volver a la
-   pestaña: una carta abierta desde el mediodía no puede seguir diciendo lo de
-   la mañana. Si la API no contesta, queda como estaba: un aviso que falta es
-   mejor que uno que miente. */
+/* ── AVISO: «hay demora» / «estamos cerrados» ──────────────────────────────
+   La API contesta `{demora, cerrado}` (ver `demoraDe` en el server): la
+   demora se prende sola pasado cierto número de pedidos del día, y las dos
+   con los botones del panel. Se pregunta al cargar, al abrir el pedido y al
+   volver a la pestaña: una carta abierta desde el mediodía no puede seguir
+   diciendo lo de la mañana. Si la API no contesta, queda como estaba: un aviso
+   que falta es mejor que uno que miente.
+   Con «cerrado», además, el pedido no sale para hoy: solo encargues para otro
+   día si la agenda los ofrece. El server lo frena igual (409); esto es para
+   que el cliente se entere antes de completar sus datos. */
+let AVISO = null;                          // null | 'demora' | 'cerrado'
+const hoyAR = () => new Date().toLocaleDateString('en-CA',{timeZone:'America/Argentina/Buenos_Aires'});
+const huecosPedibles = () => !AGENDA ? [] : (AVISO==='cerrado' ? AGENDA.huecos.filter(h=>h.dia!==hoyAR()) : AGENDA.huecos);
+
+const TEXTOS_AVISO = {
+  demora: { ic:'⏱', t:'Hoy tenemos muchos pedidos', btn:'Entendido, ver la carta',
+    p:()=>'Puede haber más demora de lo habitual. ¡Gracias por la paciencia!',
+    nota:()=>'⏱ Hoy hay más demora de lo habitual: tenemos muchos pedidos.' },
+  cerrado: { ic:'🌙', t:'Hoy estamos cerrados', btn:'Ver la carta',
+    p:()=>huecosPedibles().length
+      ? 'Hoy no tomamos pedidos, pero podés mirar la carta y encargar el tuyo para otro día.'
+      : 'Hoy no tomamos pedidos. Podés mirar la carta y pedirnos otro día. ¡Te esperamos!',
+    nota:()=>huecosPedibles().length
+      ? 'Hoy estamos cerrados: elegí para qué día lo querés.'
+      : 'Hoy estamos cerrados: no tomamos pedidos para hoy.' },
+};
+
+/* Una vez por visita y por aviso: el que ya lo leyó y recarga no tiene que
+   cerrarlo de nuevo. El almacenamiento puede no estar (modo privado): sin él,
+   se muestra igual. */
+function yaVisto(clave){ try{ return sessionStorage.getItem('hugo_aviso')===clave; }catch(e){ return false; } }
+function marcarVisto(clave){ try{ sessionStorage.setItem('hugo_aviso',clave); }catch(e){} }
+
+let focoAntesDelAviso=null;
+function abrirAviso(){
+  const x=TEXTOS_AVISO[AVISO]; if(!x) return;
+  $('aviso').classList.toggle('cerrado', AVISO==='cerrado');
+  $('avisoIc').textContent=x.ic; $('avisoT').textContent=x.t;
+  $('avisoP').textContent=x.p(); $('avisoOk').textContent=x.btn;
+  focoAntesDelAviso=document.activeElement;
+  $('aviso').hidden=false;
+  setTimeout(()=>$('avisoOk').focus(),30);
+}
+function cerrarAviso(){
+  if($('aviso').hidden) return;
+  $('aviso').hidden=true;
+  marcarVisto(AVISO+'|'+hoyAR());
+  if(focoAntesDelAviso&&focoAntesDelAviso.focus) focoAntesDelAviso.focus();
+}
+$('avisoOk').onclick=cerrarAviso;
+$('aviso').addEventListener('click',e=>{ if(e.target===e.currentTarget) cerrarAviso(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarAviso(); });
+
+/* Con el local cerrado, «lo antes posible» no existe: si la agenda ofrece
+   otros días, el pedido pasa solo a «para más adelante» sin los horarios de
+   hoy. Al reabrir, vuelve todo como estaba. */
+let LUEGO_POR_CERRADO=false;
+function aplicarCerrado(){
+  const ya=document.querySelector('[data-cuando="ya"]'), luego=document.querySelector('[data-cuando="luego"]');
+  if(!ya||!luego) return;
+  const cerrado=AVISO==='cerrado';
+  ya.disabled=cerrado;
+  if(AGENDA) pintarDias();
+  luego.disabled=cerrado&&!huecosPedibles().length;   // sin otro día, «más adelante» quedaría vacío
+  if(cerrado&&AGENDA&&huecosPedibles().length&&!luego.classList.contains('on')){ luego.click(); LUEGO_POR_CERRADO=true; }
+  else if(!cerrado&&LUEGO_POR_CERRADO){ LUEGO_POR_CERRADO=false; ya.click(); }
+}
+
 async function verDemora(){
   let d;
   try{
     const r=await fetch(API+'/demora',{signal:AbortSignal.timeout(6000)});
     if(!r.ok) return;
-    d=!!(await r.json()).demora;
+    d=await r.json();
   }catch(e){ return; }
-  $('demora').hidden=!d;
-  document.querySelectorAll('.demora-nota').forEach(n=>{ n.hidden=!d; });
+  const antes=AVISO;
+  AVISO = d.cerrado ? 'cerrado' : d.demora ? 'demora' : null;
+  document.querySelectorAll('.demora-nota').forEach(n=>{
+    n.hidden=!AVISO; if(AVISO) n.textContent=TEXTOS_AVISO[AVISO].nota();
+  });
+  if(antes!==AVISO) aplicarCerrado();
+  if(!AVISO){ if(!$('aviso').hidden) $('aviso').hidden=true; return; }
+  if(!yaVisto(AVISO+'|'+hoyAR()) && $('aviso').hidden) abrirAviso();
 }
 verDemora();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') verDemora(); });
